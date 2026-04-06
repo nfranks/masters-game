@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ClipboardList,
   BarChart3,
+  DollarSign,
   LogOut,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/groups', label: 'Groups', icon: Layers },
   { href: '/admin/rules', label: 'Rules', icon: ShieldCheck },
   { href: '/admin/entries', label: 'Entries', icon: ClipboardList },
+  { href: '/admin/payments', label: 'Payments', icon: DollarSign },
   { href: '/admin/scoring', label: 'Scoring', icon: BarChart3 },
 ];
 
