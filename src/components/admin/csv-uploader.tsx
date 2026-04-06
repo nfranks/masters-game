@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -13,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Upload, Check } from 'lucide-react';
+import { Upload, Check, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Group, Golfer } from '@/lib/types';
 
@@ -23,22 +31,26 @@ interface Props {
   initialGolfers: (Golfer & { group: { name: string } | null })[];
 }
 
+type SortField = 'name' | 'group' | 'world_ranking' | 'region' | 'age_category';
+type SortDir = 'asc' | 'desc';
+
 export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
   const [golfers, setGolfers] = useState(initialGolfers);
   const [preview, setPreview] = useState<Record<string, string>[] | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterGroup, setFilterGroup] = useState('all');
+  const [sortField, setSortField] = useState<SortField>('world_ranking');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (result) => {
-        setPreview(result.data as Record<string, string>[]);
-      },
+      complete: (result) => setPreview(result.data as Record<string, string>[]),
     });
   };
 
@@ -53,13 +65,8 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
-
       toast.success(`Imported ${result.imported} golfers`);
-      if (result.errors?.length) {
-        toast.warning(`${result.errors.length} warnings: ${result.errors.join(', ')}`);
-      }
       setPreview(null);
-      // Reload page to show updated list
       window.location.reload();
     } catch (err: any) {
       toast.error(err.message ?? 'Upload failed');
@@ -67,6 +74,67 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
       setUploading(false);
     }
   };
+
+  const updateGolfer = async (id: string, updates: Record<string, any>) => {
+    try {
+      const res = await fetch(`/api/golfers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setGolfers(golfers.map((g) => (g.id === id ? { ...g, ...updated } : g)));
+      toast.success('Golfer updated');
+    } catch {
+      toast.error('Failed to update golfer');
+    }
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
+
+  // Group counts
+  const groupCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    golfers.forEach((g) => {
+      const name = g.group?.name ?? '?';
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    });
+    return counts;
+  }, [golfers]);
+
+  const filtered = useMemo(() => {
+    let result = golfers;
+
+    if (filterGroup !== 'all') {
+      result = result.filter((g) => g.group?.name === filterGroup);
+    }
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((g) => g.name.toLowerCase().includes(q));
+    }
+
+    return [...result].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'name': cmp = a.name.localeCompare(b.name); break;
+        case 'group': cmp = (a.group?.name ?? '').localeCompare(b.group?.name ?? ''); break;
+        case 'world_ranking': cmp = (a.world_ranking ?? 9999) - (b.world_ranking ?? 9999); break;
+        case 'region': cmp = (a.region ?? '').localeCompare(b.region ?? ''); break;
+        case 'age_category': cmp = (a.age_category ?? '').localeCompare(b.age_category ?? ''); break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [golfers, search, filterGroup, sortField, sortDir]);
 
   return (
     <div className="space-y-6">
@@ -79,24 +147,17 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
             CSV should have columns: <code className="bg-gray-100 px-1 rounded">Name, Group, Rank, Age Range, Region, Rookie, Amateur</code>
           </p>
           <div className="flex gap-4">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv"
-              onChange={handleFile}
-              className="hidden"
-            />
+            <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
             <Button variant="outline" onClick={() => fileRef.current?.click()}>
               <Upload className="w-4 h-4 mr-2" /> Select CSV File
             </Button>
             {preview && (
-              <Button onClick={handleUpload} disabled={uploading} className="bg-green-700 hover:bg-green-800">
+              <Button onClick={handleUpload} disabled={uploading} className="bg-masters-green hover:bg-masters-light">
                 <Check className="w-4 h-4 mr-2" />
                 {uploading ? 'Importing...' : `Import ${preview.length} Golfers`}
               </Button>
             )}
           </div>
-
           {preview && (
             <div className="max-h-64 overflow-auto border rounded">
               <Table>
@@ -118,9 +179,7 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
                 </TableBody>
               </Table>
               {preview.length > 10 && (
-                <p className="text-xs text-gray-400 p-2 text-center">
-                  ...and {preview.length - 10} more rows
-                </p>
+                <p className="text-xs text-gray-400 p-2 text-center">...and {preview.length - 10} more</p>
               )}
             </div>
           )}
@@ -130,34 +189,95 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
       {golfers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Current Golfers ({golfers.length})</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Current Golfers ({golfers.length})</CardTitle>
+              <div className="flex gap-2 text-xs">
+                {groups.sort((a, b) => a.display_order - b.display_order).map((g) => (
+                  <Badge
+                    key={g.id}
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => setFilterGroup(filterGroup === g.name ? 'all' : g.name)}
+                  >
+                    {g.name}: {groupCounts.get(g.name) ?? 0}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="max-h-96 overflow-auto">
+          <CardContent className="space-y-3">
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search golfers..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterGroup} onValueChange={(val) => val && setFilterGroup(val)}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All groups</SelectItem>
+                  {groups.sort((a, b) => a.display_order - b.display_order).map((g) => (
+                    <SelectItem key={g.id} value={g.name}>{g.name} ({groupCounts.get(g.name) ?? 0})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <p className="text-sm text-gray-500">Showing {filtered.length} golfers</p>
+
+            <div className="max-h-[600px] overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Group</TableHead>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Age</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>
+                      <span className="flex items-center">Name <SortIcon field="name" /></span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort('group')}>
+                      <span className="flex items-center">Group <SortIcon field="group" /></span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort('world_ranking')}>
+                      <span className="flex items-center">Rank <SortIcon field="world_ranking" /></span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort('region')}>
+                      <span className="flex items-center">Region <SortIcon field="region" /></span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort('age_category')}>
+                      <span className="flex items-center">Age <SortIcon field="age_category" /></span>
+                    </TableHead>
                     <TableHead>Tags</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {golfers.map((g) => (
+                  {filtered.map((g) => (
                     <TableRow key={g.id}>
                       <TableCell className="font-medium">{g.name}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{g.group?.name ?? '?'}</Badge>
+                        <Select
+                          value={g.group_id}
+                          onValueChange={(val) => val && updateGolfer(g.id, { group_id: val })}
+                        >
+                          <SelectTrigger className="w-20 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groups.sort((a, b) => a.display_order - b.display_order).map((group) => (
+                              <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>{g.world_ranking ?? '-'}</TableCell>
-                      <TableCell>{g.region ?? '-'}</TableCell>
-                      <TableCell>{g.age_category ?? '-'}</TableCell>
+                      <TableCell className="text-sm">{g.region ?? '-'}</TableCell>
+                      <TableCell className="text-sm">{g.age_category ?? '-'}</TableCell>
                       <TableCell className="space-x-1">
-                        {g.is_rookie && <Badge className="bg-blue-100 text-blue-800">Rookie</Badge>}
-                        {g.is_amateur && <Badge className="bg-purple-100 text-purple-800">Amateur</Badge>}
+                        {g.is_rookie && <Badge className="bg-blue-100 text-blue-800 text-[10px]">Rookie</Badge>}
+                        {g.is_amateur && <Badge className="bg-purple-100 text-purple-800 text-[10px]">Amateur</Badge>}
                       </TableCell>
                     </TableRow>
                   ))}
