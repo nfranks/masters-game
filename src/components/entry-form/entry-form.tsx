@@ -30,6 +30,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [editLink, setEditLink] = useState('');
 
   const golfersByGroup = groups.map((group) => ({
     group,
@@ -76,6 +77,8 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
+      const link = `${window.location.origin}/team/${result.entry.id}/edit?token=${result.edit_token}`;
+      setEditLink(link);
       setSubmitted(true);
       toast.success('Team submitted!');
     } catch (err: any) {
@@ -99,6 +102,31 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
           <p className="text-sm text-gray-500">
             Entry fee: ${tournament.entry_fee}. Pay via Venmo/PayPal to the pool organizer.
           </p>
+          {editLink && (
+            <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm font-medium text-yellow-800 mb-2">
+                Bookmark this link to view or edit your team before the deadline:
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={editLink}
+                  className="flex-1 text-xs bg-white border rounded px-2 py-1 text-gray-600"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(editLink);
+                    toast.success('Link copied!');
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="mt-6">
             <p className="text-sm font-medium text-gray-700 mb-2">Your Team:</p>
             <div className="flex flex-wrap gap-2 justify-center">

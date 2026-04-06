@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function GET(request: Request) {
   const supabase = createServiceClient();
@@ -109,7 +110,8 @@ export async function POST(request: Request) {
     }
   }
 
-  // Insert entry
+  // Insert entry with edit token
+  const editToken = crypto.randomBytes(16).toString('hex');
   const { data: entry, error: entryError } = await supabase
     .from('entries')
     .insert({
@@ -118,6 +120,7 @@ export async function POST(request: Request) {
       last_name: last_name.trim(),
       email: email.trim().toLowerCase(),
       team_name: team_name.trim(),
+      edit_token: editToken,
     })
     .select()
     .single();
@@ -144,5 +147,105 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: egError.message }, { status: 400 });
   }
 
-  return NextResponse.json({ entry });
+  return NextResponse.json({ entry, edit_token: editToken });
+}
+
+export async function PUT(request: Request) {
+  const supabase = createServiceClient();
+  const body = await request.json();
+
+  const { entry_id, edit_token, selections, team_name } = body;
+
+  // Verify edit token
+  const { data: entry } = await supabase
+    .from('entries')
+    .select('*, tournament:tournament_config(*)')
+    .eq('id', entry_id)
+    .eq('edit_token', edit_token)
+    .single();
+
+  if (!entry) {
+    return NextResponse.json({ error: 'Invalid entry or token' }, { status: 403 });
+  }
+
+  const tournament = entry.tournament as any;
+
+  // Check deadline
+  if (tournament.status !== 'open') {
+    return NextResponse.json({ error: 'Entries are closed' }, { status: 400 });
+  }
+  if (tournament.entry_deadline && new Date(tournament.entry_deadline) < new Date()) {
+    return NextResponse.json({ error: 'Entry deadline has passed' }, { status: 400 });
+  }
+
+  // Validate group picks
+  const { data: groups } = await supabase
+    .from('groups')
+    .select('*')
+    .eq('tournament_id', tournament.id);
+
+  for (const group of groups ?? []) {
+    const picks = selections[group.id] ?? [];
+    if (picks.length !== group.picks_required) {
+      return NextResponse.json(
+        { error: `Group "${group.name}" requires ${group.picks_required} picks, got ${picks.length}` },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Validate composition rules
+  const allGolferIds: string[] = Object.values(selections as Record<string, string[]>).flat();
+
+  const { data: selectedGolfers } = await supabase
+    .from('golfers')
+    .select('*')
+    .in('id', allGolferIds);
+
+  const { data: rules } = await supabase
+    .from('composition_rules')
+    .select('*')
+    .eq('tournament_id', tournament.id);
+
+  for (const rule of rules ?? []) {
+    const count = (selectedGolfers ?? []).filter((g) => {
+      if (rule.field_name === 'region') return g.region === rule.field_value;
+      if (rule.field_name === 'age_category') return g.age_category === rule.field_value;
+      if (rule.field_name === 'is_rookie') return g.is_rookie === (rule.field_value === 'true');
+      if (rule.field_name === 'is_amateur') return g.is_amateur === (rule.field_value === 'true');
+      return false;
+    }).length;
+
+    if (count < rule.min_count) {
+      return NextResponse.json(
+        { error: `Rule violation: ${rule.label} (have ${count}, need ${rule.min_count})` },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Update team name if changed
+  if (team_name && team_name !== entry.team_name) {
+    await supabase.from('entries').update({ team_name: team_name.trim() }).eq('id', entry_id);
+  }
+
+  // Delete old golfer picks and insert new ones
+  await supabase.from('entry_golfers').delete().eq('entry_id', entry_id);
+
+  const entryGolfers = allGolferIds.map((golferId) => {
+    const golfer = selectedGolfers?.find((g) => g.id === golferId);
+    return {
+      entry_id: entry_id,
+      golfer_id: golferId,
+      group_id: golfer?.group_id ?? '',
+    };
+  });
+
+  const { error: egError } = await supabase.from('entry_golfers').insert(entryGolfers);
+
+  if (egError) {
+    return NextResponse.json({ error: egError.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true });
 }
