@@ -17,6 +17,7 @@ import { ChevronDown, ChevronRight, Search, RefreshCw } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
+  entries_open: boolean;
   entry: {
     id: string;
     team_name: string;
@@ -135,9 +136,9 @@ export default function LeaderboardPage() {
                     <>
                       <TableRow
                         key={item.entry.id}
-                        className="cursor-pointer hover:bg-green-50"
+                        className={item.entries_open ? '' : 'cursor-pointer hover:bg-green-50'}
                         onClick={() =>
-                          setExpandedId(expandedId === item.entry.id ? null : item.entry.id)
+                          !item.entries_open && setExpandedId(expandedId === item.entry.id ? null : item.entry.id)
                         }
                       >
                         <TableCell className="font-bold text-lg">
@@ -164,13 +165,15 @@ export default function LeaderboardPage() {
                         <TableCell className="text-right font-bold text-lg">
                           {item.entry.total_points}
                         </TableCell>
-                        <TableCell>
-                          {expandedId === item.entry.id ? (
-                            <ChevronDown className="w-4 h-4 text-gray-400" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                          )}
-                        </TableCell>
+                        {!item.entries_open && (
+                          <TableCell>
+                            {expandedId === item.entry.id ? (
+                              <ChevronDown className="w-4 h-4 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-400" />
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                       {expandedId === item.entry.id && (
                         <TableRow key={`${item.entry.id}-detail`}>

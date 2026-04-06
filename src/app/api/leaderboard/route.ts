@@ -6,17 +6,30 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   let tournamentId = searchParams.get('tournament_id');
 
+  let tournament: any = null;
+
   if (!tournamentId) {
-    const { data: tournament } = await supabase
+    const { data } = await supabase
       .from('tournament_config')
-      .select('id')
+      .select('*')
       .order('year', { ascending: false })
       .limit(1)
       .single();
+    tournament = data;
     tournamentId = tournament?.id ?? null;
+  } else {
+    const { data } = await supabase
+      .from('tournament_config')
+      .select('*')
+      .eq('id', tournamentId)
+      .single();
+    tournament = data;
   }
 
   if (!tournamentId) return NextResponse.json([]);
+
+  // Only show golfer details when entries are no longer being accepted
+  const entriesOpen = tournament?.status === 'open';
 
   // Get entries with their golfers and results
   const { data: entries } = await supabase
@@ -61,19 +74,16 @@ export async function GET(request: Request) {
   // Build leaderboard
   let rank = 0;
   let prevPoints = -1;
-  let skip = 0;
 
   const leaderboard = entries.map((entry, index) => {
     if (entry.total_points !== prevPoints) {
       rank = index + 1;
-      skip = 0;
-    } else {
-      skip++;
     }
     prevPoints = entry.total_points;
 
     return {
       rank,
+      entries_open: entriesOpen,
       entry: {
         id: entry.id,
         team_name: entry.team_name,
@@ -81,11 +91,14 @@ export async function GET(request: Request) {
         last_name: entry.last_name,
         total_points: entry.total_points,
       },
-      golfer_details: (entry.entry_golfers ?? []).map((eg: any) => ({
-        golfer: eg.golfer,
-        result: resultsMap.get(eg.golfer_id) ?? null,
-        scores: scoresMap.get(eg.golfer_id) ?? [],
-      })),
+      // Hide golfer details while entries are still open
+      golfer_details: entriesOpen
+        ? []
+        : (entry.entry_golfers ?? []).map((eg: any) => ({
+            golfer: eg.golfer,
+            result: resultsMap.get(eg.golfer_id) ?? null,
+            scores: scoresMap.get(eg.golfer_id) ?? [],
+          })),
     };
   });
 
