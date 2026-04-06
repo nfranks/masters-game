@@ -43,7 +43,7 @@ interface Props {
 type SortField = 'name' | 'team_name' | 'paid_to' | 'payment_method' | 'is_paid';
 type SortDir = 'asc' | 'desc';
 
-const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle'];
+const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle', 'Other'];
 
 export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
@@ -263,7 +263,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
               </TableHeader>
               <TableBody>
                 {filtered.map((entry) => (
-                  <TableRow key={entry.id} className={cn(!entry.is_paid && 'bg-red-50/50')}>
+                  <TableRow key={entry.id} className={cn(!entry.is_paid && 'bg-red-50/50', entry.payment_method === 'Other' && 'bg-amber-50/50')}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{entry.first_name} {entry.last_name}</p>

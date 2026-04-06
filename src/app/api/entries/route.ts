@@ -124,7 +124,7 @@ export async function POST(request: Request) {
       email: email.trim().toLowerCase(),
       team_name: team_name.trim(),
       edit_token: editToken,
-      payment_method: paid_to || null,
+      payment_method: ['Venmo', 'Nate', 'Matt', 'Charle'].includes(paid_to) ? paid_to : 'Other',
       paid_to: paid_to || null,
     })
     .select()
