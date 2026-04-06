@@ -18,8 +18,8 @@ export default async function AdminDashboard() {
 
   if (tournament) {
     const [entriesRes, paidRes, groupsRes, golfersRes] = await Promise.all([
-      supabase.from('entries').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id),
-      supabase.from('entries').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id).eq('is_paid', true),
+      supabase.from('entries').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id).eq('is_archived', false),
+      supabase.from('entries').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id).eq('is_archived', false).eq('is_paid', true),
       supabase.from('groups').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id),
       supabase.from('golfers').select('*', { count: 'exact', head: true }).eq('tournament_id', tournament.id),
     ]);
