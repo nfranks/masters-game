@@ -263,7 +263,7 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
                           onValueChange={(val) => val && updateGolfer(g.id, { group_id: val })}
                         >
                           <SelectTrigger className="w-20 h-8 text-xs">
-                            <SelectValue />
+                            {g.group?.name ?? '?'}
                           </SelectTrigger>
                           <SelectContent>
                             {groups.sort((a, b) => a.display_order - b.display_order).map((group) => (
