@@ -22,7 +22,8 @@ export async function GET(request: Request) {
       id, team_name, first_name, last_name,
       entry_golfers ( golfer_id )
     `)
-    .eq('tournament_id', tournament.id);
+    .eq('tournament_id', tournament.id)
+    .eq('is_archived', false);
 
   if (!entries?.length) return NextResponse.json([]);
 

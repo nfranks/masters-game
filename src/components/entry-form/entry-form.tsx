@@ -54,6 +54,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [editLink, setEditLink] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const golfersByGroup = groups.map((group) => ({
     group,
@@ -206,9 +207,33 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <Label>Team Name</Label>
               <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Something clever..." />
             </div>
+            {emailError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+                {emailError}
+              </div>
+            )}
             <div className="flex justify-end">
               <Button
-                onClick={() => setStep('picks')}
+                onClick={async () => {
+                  setEmailError('');
+                  try {
+                    const res = await fetch('/api/entries/check-email', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, tournament_id: tournament.id }),
+                    });
+                    const { exists, team_name } = await res.json();
+                    if (exists) {
+                      setEmailError(
+                        `An entry with this email has already been submitted${team_name ? ` (team: "${team_name}")` : ''}. Limit 1 entry per person.`
+                      );
+                      return;
+                    }
+                  } catch {
+                    // If check fails, let them proceed — server will catch it on submit
+                  }
+                  setStep('picks');
+                }}
                 disabled={!firstName || !lastName || !email || !teamName}
                 className="bg-masters-green hover:bg-masters-light"
               >

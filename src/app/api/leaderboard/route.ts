@@ -32,6 +32,7 @@ export async function GET(request: Request) {
       )
     `)
     .eq('tournament_id', tournamentId)
+    .eq('is_archived', false)
     .order('total_points', { ascending: false });
 
   if (!entries?.length) return NextResponse.json([]);

@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Archive, ArchiveRestore } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EntryRow {
@@ -36,6 +36,7 @@ interface EntryRow {
   referred_by: string | null;
   created_at: string;
   total_points: number;
+  is_archived: boolean;
   entry_golfers: { golfer: { name: string; group: { name: string } | null } }[];
 }
 
@@ -52,6 +53,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
   const [search, setSearch] = useState('');
   const [filterPaidTo, setFilterPaidTo] = useState('all');
+  const [showArchived, setShowArchived] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -80,8 +82,11 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
       : <ArrowDown className="w-3 h-3 ml-1" />;
   };
 
+  const activeEntries = entries.filter((e) => !e.is_archived);
+  const archivedEntries = entries.filter((e) => e.is_archived);
+
   const filtered = useMemo(() => {
-    let result = entries;
+    let result = showArchived ? archivedEntries : activeEntries;
 
     // Filter by paid_to
     if (filterPaidTo !== 'all') {
@@ -131,9 +136,9 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
     });
 
     return result;
-  }, [entries, search, filterPaidTo, sortField, sortDir]);
+  }, [activeEntries, archivedEntries, showArchived, search, filterPaidTo, sortField, sortDir]);
 
-  const paidCount = entries.filter((e) => e.is_paid).length;
+  const paidCount = activeEntries.filter((e) => e.is_paid).length;
   const totalCollected = paidCount * entryFee;
 
   const updateEntry = async (id: string, updates: Record<string, any>) => {
@@ -156,8 +161,8 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="py-3">
-            <p className="text-sm text-gray-500">Total</p>
-            <p className="text-2xl font-bold">{entries.length}</p>
+            <p className="text-sm text-gray-500">Active</p>
+            <p className="text-2xl font-bold">{activeEntries.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -169,7 +174,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
         <Card>
           <CardContent className="py-3">
             <p className="text-sm text-gray-500">Unpaid</p>
-            <p className="text-2xl font-bold text-red-600">{entries.length - paidCount}</p>
+            <p className="text-2xl font-bold text-red-600">{activeEntries.length - paidCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -202,6 +207,14 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={showArchived ? 'default' : 'outline'}
+          onClick={() => setShowArchived(!showArchived)}
+          className={showArchived ? 'bg-amber-600 hover:bg-amber-700' : ''}
+        >
+          <Archive className="w-4 h-4 mr-2" />
+          {showArchived ? `Archived (${archivedEntries.length})` : `${archivedEntries.length} Archived`}
+        </Button>
       </div>
 
       <p className="text-sm text-gray-500">
@@ -278,11 +291,27 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                       {new Date(entry.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/admin/entries/${entry.id}/edit`}>
-                        <Button variant="ghost" size="sm">
-                          <Pencil className="w-3 h-3" />
+                      <div className="flex items-center gap-1">
+                        <Link href={`/admin/entries/${entry.id}/edit`}>
+                          <Button variant="ghost" size="sm" title="Edit team">
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title={entry.is_archived ? 'Restore entry' : 'Archive entry'}
+                          onClick={() =>
+                            updateEntry(entry.id, { is_archived: !entry.is_archived })
+                          }
+                        >
+                          {entry.is_archived ? (
+                            <ArchiveRestore className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Archive className="w-3 h-3 text-amber-600" />
+                          )}
                         </Button>
-                      </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -54,12 +54,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Entry deadline has passed' }, { status: 400 });
   }
 
-  // Check duplicate email
+  // Check duplicate email (exclude archived entries)
   const { data: existing } = await supabase
     .from('entries')
     .select('id')
     .eq('tournament_id', tournament_id)
     .eq('email', email.trim().toLowerCase())
+    .eq('is_archived', false)
     .single();
 
   if (existing) {

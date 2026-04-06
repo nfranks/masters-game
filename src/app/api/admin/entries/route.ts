@@ -10,6 +10,7 @@ export async function PATCH(request: Request) {
   if ('payment_method' in body) updates.payment_method = body.payment_method;
   if ('paid_to' in body) updates.paid_to = body.paid_to;
   if ('referred_by' in body) updates.referred_by = body.referred_by;
+  if ('is_archived' in body) updates.is_archived = body.is_archived;
 
   const { data, error } = await supabase
     .from('entries')
