@@ -280,7 +280,9 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
                         <SelectContent>
                           <SelectItem value="Venmo">Venmo</SelectItem>
                           <SelectItem value="PayPal">PayPal</SelectItem>
-                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="Cash">Matt</SelectItem>
+                          <SelectItem value="Charle">Charle</SelectItem>
+                          <SelectItem value="Jack">Jack</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>

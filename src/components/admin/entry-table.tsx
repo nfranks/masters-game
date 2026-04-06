@@ -5,14 +5,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -35,6 +27,7 @@ interface EntryRow {
   paid_to: string | null;
   referred_by: string | null;
   created_at: string;
+  updated_at: string;
   total_points: number;
   is_archived: boolean;
   entry_golfers: { golfer: { name: string; group: { name: string } | null } }[];
@@ -46,100 +39,64 @@ interface Props {
   entryFee: number;
 }
 
-type SortField = 'team_name' | 'name' | 'paid_to' | 'payment_method' | 'is_paid' | 'created_at';
+type SortField = 'team_name' | 'name' | 'email' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
+
+function formatTimestamp(ts: string) {
+  const d = new Date(ts);
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'America/New_York',
+  }) + ' ET';
+}
 
 export function EntryTable({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
   const [search, setSearch] = useState('');
-  const [filterPaidTo, setFilterPaidTo] = useState('all');
   const [showArchived, setShowArchived] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  // Get unique paid_to values for the filter
-  const paidToValues = useMemo(() => {
-    const values = new Set<string>();
-    entries.forEach((e) => {
-      if (e.paid_to) values.add(e.paid_to);
-    });
-    return Array.from(values).sort();
-  }, [entries]);
+  const activeEntries = entries.filter((e) => !e.is_archived);
+  const archivedEntries = entries.filter((e) => e.is_archived);
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDir('asc');
-    }
+    if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30" />;
-    return sortDir === 'asc'
-      ? <ArrowUp className="w-3 h-3 ml-1" />
-      : <ArrowDown className="w-3 h-3 ml-1" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
   };
-
-  const activeEntries = entries.filter((e) => !e.is_archived);
-  const archivedEntries = entries.filter((e) => e.is_archived);
 
   const filtered = useMemo(() => {
     let result = showArchived ? archivedEntries : activeEntries;
 
-    // Filter by paid_to
-    if (filterPaidTo !== 'all') {
-      if (filterPaidTo === 'none') {
-        result = result.filter((e) => !e.paid_to);
-      } else {
-        result = result.filter((e) => e.paid_to === filterPaidTo);
-      }
-    }
-
-    // Search
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.team_name.toLowerCase().includes(q) ||
-          e.email.toLowerCase().includes(q) ||
-          `${e.first_name} ${e.last_name}`.toLowerCase().includes(q) ||
-          (e.paid_to ?? '').toLowerCase().includes(q)
+      result = result.filter((e) =>
+        e.team_name.toLowerCase().includes(q) ||
+        e.email.toLowerCase().includes(q) ||
+        `${e.first_name} ${e.last_name}`.toLowerCase().includes(q)
       );
     }
 
-    // Sort
-    result = [...result].sort((a, b) => {
+    return [...result].sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
-        case 'team_name':
-          cmp = a.team_name.localeCompare(b.team_name);
-          break;
-        case 'name':
-          cmp = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
-          break;
-        case 'paid_to':
-          cmp = (a.paid_to ?? '').localeCompare(b.paid_to ?? '');
-          break;
-        case 'payment_method':
-          cmp = (a.payment_method ?? '').localeCompare(b.payment_method ?? '');
-          break;
-        case 'is_paid':
-          cmp = (a.is_paid ? 1 : 0) - (b.is_paid ? 1 : 0);
-          break;
-        case 'created_at':
-          cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          break;
+        case 'team_name': cmp = a.team_name.localeCompare(b.team_name); break;
+        case 'name': cmp = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`); break;
+        case 'email': cmp = a.email.localeCompare(b.email); break;
+        case 'created_at': cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); break;
+        case 'updated_at': cmp = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(); break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-
-    return result;
-  }, [activeEntries, archivedEntries, showArchived, search, filterPaidTo, sortField, sortDir]);
-
-  const paidCount = activeEntries.filter((e) => e.is_paid).length;
-  const totalCollected = paidCount * entryFee;
+  }, [activeEntries, archivedEntries, showArchived, search, sortField, sortDir]);
 
   const updateEntry = async (id: string, updates: Record<string, any>) => {
     try {
@@ -158,29 +115,17 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="py-3">
-            <p className="text-sm text-gray-500">Active</p>
+            <p className="text-sm text-gray-500">Active Entries</p>
             <p className="text-2xl font-bold">{activeEntries.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="py-3">
-            <p className="text-sm text-gray-500">Paid</p>
-            <p className="text-2xl font-bold text-green-600">{paidCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-3">
-            <p className="text-sm text-gray-500">Unpaid</p>
-            <p className="text-2xl font-bold text-red-600">{activeEntries.length - paidCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="py-3">
-            <p className="text-sm text-gray-500">Collected</p>
-            <p className="text-2xl font-bold">${totalCollected}</p>
+            <p className="text-sm text-gray-500">Archived</p>
+            <p className="text-2xl font-bold text-gray-400">{archivedEntries.length}</p>
           </CardContent>
         </Card>
       </div>
@@ -189,24 +134,12 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search by name, email, team, or paid to..."
+            placeholder="Search by name, email, or team..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-        <Select value={filterPaidTo} onValueChange={(val) => val && setFilterPaidTo(val)}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by Paying To" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All payment destinations</SelectItem>
-            <SelectItem value="none">No payment info</SelectItem>
-            {paidToValues.map((v) => (
-              <SelectItem key={v} value={v}>{v}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Button
           variant={showArchived ? 'default' : 'outline'}
           onClick={() => setShowArchived(!showArchived)}
@@ -217,10 +150,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
         </Button>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Showing {filtered.length} of {entries.length} entries
-        {filterPaidTo !== 'all' && ` (filtered: ${filterPaidTo === 'none' ? 'no payment info' : filterPaidTo})`}
-      </p>
+      <p className="text-sm text-gray-500">Showing {filtered.length} entries</p>
 
       <Card>
         <CardContent className="p-0">
@@ -234,61 +164,32 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>
                     <span className="flex items-center">Name <SortIcon field="name" /></span>
                   </TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="cursor-pointer select-none text-center" onClick={() => handleSort('is_paid')}>
-                    <span className="flex items-center justify-center">Paid <SortIcon field="is_paid" /></span>
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('payment_method')}>
-                    <span className="flex items-center">Method <SortIcon field="payment_method" /></span>
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('paid_to')}>
-                    <span className="flex items-center">Paying To <SortIcon field="paid_to" /></span>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('email')}>
+                    <span className="flex items-center">Email <SortIcon field="email" /></span>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('created_at')}>
                     <span className="flex items-center">Submitted <SortIcon field="created_at" /></span>
                   </TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('updated_at')}>
+                    <span className="flex items-center">Last Updated <SortIcon field="updated_at" /></span>
+                  </TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">{entry.team_name}</TableCell>
-                    <TableCell>
-                      {entry.first_name} {entry.last_name}
-                    </TableCell>
+                    <TableCell>{entry.first_name} {entry.last_name}</TableCell>
                     <TableCell className="text-sm text-gray-500">{entry.email}</TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={entry.is_paid}
-                        onCheckedChange={(checked) =>
-                          updateEntry(entry.id, { is_paid: !!checked })
-                        }
-                      />
+                    <TableCell className="text-sm text-gray-500 whitespace-nowrap">
+                      {formatTimestamp(entry.created_at)}
                     </TableCell>
-                    <TableCell>
-                      <Select
-                        value={entry.payment_method ?? ''}
-                        onValueChange={(val) =>
-                          updateEntry(entry.id, { payment_method: val || null })
-                        }
-                      >
-                        <SelectTrigger className="w-28 h-8 text-xs">
-                          <SelectValue placeholder="Method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Venmo">Venmo</SelectItem>
-                          <SelectItem value="PayPal">PayPal</SelectItem>
-                          <SelectItem value="Cash">Cash</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {entry.paid_to ?? <span className="text-gray-300">-</span>}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {new Date(entry.created_at).toLocaleDateString()}
+                    <TableCell className="text-sm text-gray-500 whitespace-nowrap">
+                      {entry.updated_at !== entry.created_at
+                        ? formatTimestamp(entry.updated_at)
+                        : <span className="text-gray-300">-</span>
+                      }
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -301,9 +202,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                           variant="ghost"
                           size="sm"
                           title={entry.is_archived ? 'Restore entry' : 'Archive entry'}
-                          onClick={() =>
-                            updateEntry(entry.id, { is_archived: !entry.is_archived })
-                          }
+                          onClick={() => updateEntry(entry.id, { is_archived: !entry.is_archived })}
                         >
                           {entry.is_archived ? (
                             <ArchiveRestore className="w-3 h-3 text-green-600" />
