@@ -293,6 +293,11 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
 
             {paymentOption === 'venmo' && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <img
+                  src="/venmo-qr.jpg"
+                  alt="Venmo QR Code"
+                  className="w-48 h-48 mx-auto mb-3 rounded-lg"
+                />
                 <p className="text-sm font-medium text-blue-800 mb-2">Venmo: @Jack-Kavanagh</p>
                 <a
                   href="https://venmo.com/u/Jack-Kavanagh"
