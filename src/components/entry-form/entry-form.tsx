@@ -39,6 +39,7 @@ const PAYMENT_OPTIONS = [
   { value: 'matt', label: 'Matt G', description: 'Pay Matt G directly', method: 'Cash' as const, paid_to: 'Matt G' },
   { value: 'charle', label: 'Charle', description: 'Pay Charle directly', method: 'Cash' as const, paid_to: 'Charle' },
   { value: 'jack', label: 'Jack', description: 'Pay Jack directly', method: 'Cash' as const, paid_to: 'Jack' },
+  { value: 'someone_else', label: 'Someone else is paying for me', description: 'Enter the name of the person paying', method: 'Other' as const, paid_to: '' },
 ];
 
 export function EntryForm({ tournament, groups, golfers, rules }: Props) {
@@ -49,6 +50,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   const [teamName, setTeamName] = useState('');
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [paymentOption, setPaymentOption] = useState('');
+  const [payerName, setPayerName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [editLink, setEditLink] = useState('');
@@ -78,9 +80,11 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   });
 
   const selectedPayment = PAYMENT_OPTIONS.find((p) => p.value === paymentOption);
+  const effectivePaidTo = paymentOption === 'someone_else' ? payerName.trim() : selectedPayment?.paid_to ?? '';
 
   const canSubmit =
-    firstName && lastName && email && teamName && allGroupsFilled && allRulesMet && paymentOption;
+    firstName && lastName && email && teamName && allGroupsFilled && allRulesMet && paymentOption &&
+    (paymentOption !== 'someone_else' || payerName.trim());
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -97,7 +101,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
           team_name: teamName,
           selections,
           payment_method: selectedPayment?.method,
-          paid_to: selectedPayment?.paid_to,
+          paid_to: effectivePaidTo,
         }),
       });
       const result = await res.json();
@@ -311,6 +315,19 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               </div>
             )}
 
+            {paymentOption === 'someone_else' && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <Label htmlFor="payer-name" className="text-sm font-medium">Who is paying for you?</Label>
+                <Input
+                  id="payer-name"
+                  value={payerName}
+                  onChange={(e) => setPayerName(e.target.value)}
+                  placeholder="Enter their name"
+                  className="mt-2"
+                />
+              </div>
+            )}
+
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep('picks')}>
                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
@@ -338,7 +355,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <div><span className="text-gray-500">Name:</span> {firstName} {lastName}</div>
               <div><span className="text-gray-500">Email:</span> {email}</div>
               <div><span className="text-gray-500">Team:</span> {teamName}</div>
-              <div><span className="text-gray-500">Payment:</span> {selectedPayment?.label} ({selectedPayment?.paid_to})</div>
+              <div><span className="text-gray-500">Payment:</span> {selectedPayment?.label}{effectivePaidTo ? ` (${effectivePaidTo})` : ''}</div>
             </div>
 
             <div>
