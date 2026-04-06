@@ -116,7 +116,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
             <strong>{teamName}</strong> by {firstName} {lastName}
           </p>
           <p className="text-sm text-gray-500">
-            Entry fee: ${tournament.entry_fee}. Pay via Venmo/PayPal to the pool organizer.
+            A confirmation email has been sent to <strong>{email}</strong>. Check your spam folder if you don&apos;t see it.
           </p>
           {editLink && (
             <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
