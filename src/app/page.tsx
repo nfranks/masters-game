@@ -70,16 +70,16 @@ export default async function HomePage() {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           {isOpen && (
-            <Link href="/enter">
-              <Button size="lg" className="bg-masters-gold hover:bg-masters-gold-deep text-masters-dark font-bold text-lg px-10 uppercase tracking-wider">
+            <Link href="/enter" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-masters-gold hover:bg-masters-gold-deep text-masters-dark font-bold text-lg px-10 uppercase tracking-wider">
                 Enter Your Team
               </Button>
             </Link>
           )}
-          <Link href="/leaderboard">
-            <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-lg px-10 uppercase tracking-wider">
+          <Link href="/leaderboard" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 text-lg px-10 uppercase tracking-wider">
               View Leaderboard
             </Button>
           </Link>
