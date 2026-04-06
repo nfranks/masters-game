@@ -40,8 +40,8 @@ export async function sendConfirmationEmail({
         day: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-        timeZoneName: 'short',
-      })
+        timeZone: 'America/New_York',
+      }) + ' ET'
     : 'TBD';
 
   const golferList = golferNames.map((name) => `  - ${name}`).join('\n');

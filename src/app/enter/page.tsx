@@ -72,7 +72,7 @@ export default async function EnterPage() {
           </p>
           {tournament.entry_deadline && (
             <p className="text-masters-gold text-sm mt-1">
-              Deadline: {new Date(tournament.entry_deadline).toLocaleString()}
+              Deadline: {new Date(tournament.entry_deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET
             </p>
           )}
         </div>

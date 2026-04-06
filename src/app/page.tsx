@@ -63,7 +63,7 @@ export default async function HomePage() {
             <p className="text-4xl font-serif font-bold text-white capitalize">{tournament?.status ?? 'Setup'}</p>
             {deadline && (
               <p className="text-white/50 text-sm mt-1">
-                Deadline: {deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                Deadline: {deadline.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET
               </p>
             )}
           </div>
