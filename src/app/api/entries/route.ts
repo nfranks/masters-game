@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { sendConfirmationEmail } from '@/lib/email';
 
 export async function GET(request: Request) {
   const supabase = createServiceClient();
@@ -146,6 +147,24 @@ export async function POST(request: Request) {
     await supabase.from('entries').delete().eq('id', entry.id);
     return NextResponse.json({ error: egError.message }, { status: 400 });
   }
+
+  // Send confirmation email (don't block on failure)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://masters-game.vercel.app';
+  const editLink = `${appUrl}/team/${entry.id}/edit?token=${editToken}`;
+  const golferNames = (selectedGolfers ?? [])
+    .filter((g) => allGolferIds.includes(g.id))
+    .map((g) => g.name);
+
+  sendConfirmationEmail({
+    to: email.trim().toLowerCase(),
+    firstName: first_name.trim(),
+    lastName: last_name.trim(),
+    teamName: team_name.trim(),
+    golferNames,
+    editLink,
+    entryFee: tournament.entry_fee,
+    deadline: tournament.entry_deadline,
+  }).catch((err) => console.error('Email failed:', err));
 
   return NextResponse.json({ entry, edit_token: editToken });
 }
