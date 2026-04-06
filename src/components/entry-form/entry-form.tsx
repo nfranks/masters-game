@@ -19,7 +19,27 @@ interface Props {
   rules: CompositionRule[];
 }
 
-type Step = 'info' | 'picks' | 'review';
+type Step = 'info' | 'picks' | 'payment' | 'review';
+
+const PAYMENT_OPTIONS = [
+  {
+    value: 'venmo',
+    label: 'Venmo',
+    description: '**Send as personal** (QR code or https://venmo.com/u/Jack-Kavanagh)',
+    method: 'Venmo' as const,
+    paid_to: 'Jack Kavanagh',
+  },
+  {
+    value: 'paypal',
+    label: 'PayPal',
+    description: 'nmemastersgame@gmail.com **MUST SEND AS GIFT OR WILL BE REJECTED**',
+    method: 'PayPal' as const,
+    paid_to: 'nmemastersgame@gmail.com',
+  },
+  { value: 'matt', label: 'Matt G', description: 'Pay Matt G directly', method: 'Cash' as const, paid_to: 'Matt G' },
+  { value: 'charle', label: 'Charle', description: 'Pay Charle directly', method: 'Cash' as const, paid_to: 'Charle' },
+  { value: 'jack', label: 'Jack', description: 'Pay Jack directly', method: 'Cash' as const, paid_to: 'Jack' },
+];
 
 export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   const [step, setStep] = useState<Step>('info');
@@ -28,6 +48,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
   const [email, setEmail] = useState('');
   const [teamName, setTeamName] = useState('');
   const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [paymentOption, setPaymentOption] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [editLink, setEditLink] = useState('');
@@ -56,8 +77,10 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
     return count >= rule.min_count;
   });
 
+  const selectedPayment = PAYMENT_OPTIONS.find((p) => p.value === paymentOption);
+
   const canSubmit =
-    firstName && lastName && email && teamName && allGroupsFilled && allRulesMet;
+    firstName && lastName && email && teamName && allGroupsFilled && allRulesMet && paymentOption;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -73,6 +96,8 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
           email,
           team_name: teamName,
           selections,
+          payment_method: selectedPayment?.method,
+          paid_to: selectedPayment?.paid_to,
         }),
       });
       const result = await res.json();
@@ -209,17 +234,100 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button
-              onClick={() => setStep('review')}
+              onClick={() => setStep('payment')}
               disabled={!allGroupsFilled || !allRulesMet}
               className="bg-green-700 hover:bg-green-800"
             >
-              Review Team <ChevronRight className="w-4 h-4 ml-1" />
+              Next: Payment <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Step 3: Review & Submit */}
+      {/* Step 3: Payment */}
+      {step === 'payment' && (
+        <Card className="bg-white/95">
+          <CardHeader>
+            <CardTitle>Step 3: Payment (${tournament.entry_fee})</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Please pay ${tournament.entry_fee} via one of the options below.
+            </p>
+
+            <div className="space-y-3">
+              {PAYMENT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setPaymentOption(option.value)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    paymentOption === option.value
+                      ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        paymentOption === option.value
+                          ? 'border-green-500 bg-green-500'
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {paymentOption === option.value && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{option.label}</p>
+                      <p className="text-sm text-gray-500">{option.description}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {paymentOption === 'venmo' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <p className="text-sm font-medium text-blue-800 mb-2">Venmo: @Jack-Kavanagh</p>
+                <a
+                  href="https://venmo.com/u/Jack-Kavanagh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
+                >
+                  Open Venmo
+                </a>
+                <p className="text-xs text-blue-600 mt-2">Send as personal payment</p>
+              </div>
+            )}
+
+            {paymentOption === 'paypal' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                <p className="text-sm font-medium text-yellow-800 mb-2">
+                  PayPal: nmemastersgame@gmail.com
+                </p>
+                <p className="text-xs text-red-600 font-bold">MUST SEND AS GIFT OR WILL BE REJECTED</p>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setStep('picks')}>
+                <ChevronLeft className="w-4 h-4 mr-1" /> Back
+              </Button>
+              <Button
+                onClick={() => setStep('review')}
+                disabled={!paymentOption}
+                className="bg-green-700 hover:bg-green-800"
+              >
+                Review Team <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Review & Submit */}
       {step === 'review' && (
         <Card className="bg-white/95">
           <CardHeader>
@@ -230,7 +338,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <div><span className="text-gray-500">Name:</span> {firstName} {lastName}</div>
               <div><span className="text-gray-500">Email:</span> {email}</div>
               <div><span className="text-gray-500">Team:</span> {teamName}</div>
-              <div><span className="text-gray-500">Entry Fee:</span> ${tournament.entry_fee}</div>
+              <div><span className="text-gray-500">Payment:</span> {selectedPayment?.label} ({selectedPayment?.paid_to})</div>
             </div>
 
             <div>
@@ -255,8 +363,8 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep('picks')}>
-                <ChevronLeft className="w-4 h-4 mr-1" /> Edit Picks
+              <Button variant="outline" onClick={() => setStep('payment')}>
+                <ChevronLeft className="w-4 h-4 mr-1" /> Back
               </Button>
               <Button
                 onClick={handleSubmit}

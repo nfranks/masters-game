@@ -17,6 +17,8 @@ interface SendConfirmationParams {
   editLink: string;
   entryFee: number;
   deadline: string | null;
+  paymentMethod: string | null;
+  paidTo: string | null;
 }
 
 export async function sendConfirmationEmail({
@@ -28,6 +30,8 @@ export async function sendConfirmationEmail({
   editLink,
   entryFee,
   deadline,
+  paymentMethod,
+  paidTo,
 }: SendConfirmationParams) {
   const deadlineStr = deadline
     ? new Date(deadline).toLocaleString('en-US', {
@@ -73,10 +77,12 @@ export async function sendConfirmationEmail({
         </div>
 
         <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
-          <p style="margin: 0 0 8px; font-weight: bold;">Payment Reminder</p>
+          <p style="margin: 0 0 8px; font-weight: bold;">Payment ($${entryFee})</p>
           <p style="margin: 0; font-size: 14px; color: #6b7280;">
-            $${entryFee} entry fee. Please pay via Venmo or PayPal to the pool organizer.
+            ${paymentMethod ? `Method: <strong>${paymentMethod}</strong> &mdash; ${paidTo}` : 'Please pay via Venmo or PayPal to the pool organizer.'}
           </p>
+          ${paymentMethod === 'Venmo' ? '<p style="margin: 8px 0 0; font-size: 13px;"><a href="https://venmo.com/u/Jack-Kavanagh" style="color: #2563eb;">Pay via Venmo &rarr;</a> (send as personal)</p>' : ''}
+          ${paymentMethod === 'PayPal' ? '<p style="margin: 8px 0 0; font-size: 13px; color: #dc2626;"><strong>Must send as gift or will be rejected</strong></p>' : ''}
         </div>
 
         <p style="font-size: 12px; color: #9ca3af; margin-top: 24px;">
