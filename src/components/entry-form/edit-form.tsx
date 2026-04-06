@@ -20,6 +20,7 @@ interface Props {
   rules: CompositionRule[];
   currentSelections: Record<string, string[]>;
   isEditable: boolean;
+  adminMode?: boolean;
 }
 
 export function EditForm({
@@ -30,6 +31,7 @@ export function EditForm({
   rules,
   currentSelections,
   isEditable,
+  adminMode,
 }: Props) {
   const [selections, setSelections] = useState<Record<string, string[]>>(currentSelections);
   const [teamName, setTeamName] = useState(entry.team_name);
@@ -73,6 +75,7 @@ export function EditForm({
           edit_token: token,
           selections,
           team_name: teamName,
+          admin_edit: adminMode ?? false,
         }),
       });
       const result = await res.json();

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -20,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search } from 'lucide-react';
+import { Search, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EntryRow {
@@ -164,6 +166,13 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {new Date(entry.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/admin/entries/${entry.id}/edit`}>
+                        <Button variant="ghost" size="sm">
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}

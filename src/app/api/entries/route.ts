@@ -154,7 +154,7 @@ export async function PUT(request: Request) {
   const supabase = createServiceClient();
   const body = await request.json();
 
-  const { entry_id, edit_token, selections, team_name } = body;
+  const { entry_id, edit_token, selections, team_name, admin_edit } = body;
 
   // Verify edit token
   const { data: entry } = await supabase
@@ -170,12 +170,14 @@ export async function PUT(request: Request) {
 
   const tournament = entry.tournament as any;
 
-  // Check deadline
-  if (tournament.status !== 'open') {
-    return NextResponse.json({ error: 'Entries are closed' }, { status: 400 });
-  }
-  if (tournament.entry_deadline && new Date(tournament.entry_deadline) < new Date()) {
-    return NextResponse.json({ error: 'Entry deadline has passed' }, { status: 400 });
+  // Check deadline (admins bypass this)
+  if (!admin_edit) {
+    if (tournament.status !== 'open') {
+      return NextResponse.json({ error: 'Entries are closed' }, { status: 400 });
+    }
+    if (tournament.entry_deadline && new Date(tournament.entry_deadline) < new Date()) {
+      return NextResponse.json({ error: 'Entry deadline has passed' }, { status: 400 });
+    }
   }
 
   // Validate group picks
