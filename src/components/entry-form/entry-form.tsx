@@ -26,7 +26,6 @@ const PAYMENT_OPTIONS = [
   { value: 'nate', label: 'Nate', description: 'Pay Nate directly', paid_to: 'Nate' },
   { value: 'matt', label: 'Matt G', description: 'Pay Matt G directly', paid_to: 'Matt' },
   { value: 'charle', label: 'Charle', description: 'Pay Charle directly', paid_to: 'Charle' },
-  { value: 'jack', label: 'Jack', description: 'Pay Jack directly', paid_to: 'Jack' },
   { value: 'someone_else', label: 'Someone else is paying for me', description: 'Enter the name of the person paying', paid_to: '' },
 ];
 

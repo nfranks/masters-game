@@ -43,7 +43,7 @@ interface Props {
 type SortField = 'name' | 'team_name' | 'paid_to' | 'payment_method' | 'is_paid';
 type SortDir = 'asc' | 'desc';
 
-const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle', 'Jack'];
+const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle'];
 
 export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
