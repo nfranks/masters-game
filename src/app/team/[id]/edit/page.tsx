@@ -18,11 +18,11 @@ export default async function EditTeamPage({
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-green-950">
+      <div className="min-h-screen bg-masters-dark">
         <Header />
         <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold text-white mb-4">Missing Token</h1>
-          <p className="text-green-200">You need the full edit link to modify your team.</p>
+          <p className="text-white/70">You need the full edit link to modify your team.</p>
         </main>
       </div>
     );
@@ -80,18 +80,18 @@ export default async function EditTeamPage({
   }
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
             {isEditable ? 'Edit Your Team' : 'Your Team'}
           </h1>
-          <p className="text-green-200">
+          <p className="text-white/70">
             {entry.team_name} &mdash; {entry.first_name} {entry.last_name}
           </p>
           {!isEditable && (
-            <p className="text-yellow-400 text-sm mt-2">
+            <p className="text-masters-gold text-sm mt-2">
               Editing is closed. The deadline has passed or entries are no longer open.
             </p>
           )}

@@ -36,12 +36,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-green-900 text-white flex flex-col">
+      <aside className="w-64 bg-masters-dark text-white flex flex-col">
         <div className="p-6">
-          <Link href="/" className="text-xl font-bold text-yellow-400">
+          <Link href="/" className="text-xl font-bold text-masters-gold">
             Masters Pool
           </Link>
-          <p className="text-green-300 text-xs mt-1">Admin Dashboard</p>
+          <p className="text-white/50 text-xs mt-1">Admin Dashboard</p>
         </div>
         <nav className="flex-1 px-3 space-y-1">
           {navItems.map(({ href, label, icon: Icon }) => {
@@ -53,8 +53,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-green-700 text-white'
-                    : 'text-green-200 hover:bg-green-800 hover:text-white'
+                    ? 'bg-masters-green text-white'
+                    : 'text-white/70 hover:bg-masters-green hover:text-white'
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -66,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-3">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-green-300 hover:bg-green-800 hover:text-white w-full transition-colors"
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-white/50 hover:bg-masters-green hover:text-white w-full transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Sign Out

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Header } from '@/components/shared/header';
 import { createServiceClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,64 +30,56 @@ export default async function HomePage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">
-            {tournament?.name ?? 'Masters Pool'} {tournament?.year ?? 2026}
+      <main className="max-w-4xl mx-auto px-4 py-16">
+        {/* Hero */}
+        <div className="text-center mb-16">
+          <p className="uppercase tracking-[0.3em] text-masters-gold text-sm font-medium mb-4">
+            A Tradition Unlike Any Other
+          </p>
+          <h1 className="font-serif text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
+            {tournament?.name ?? 'Masters Pool'}
           </h1>
-          <p className="text-green-200 text-lg">
-            Pick your team. Track the scores. Win the pool.
+          <p className="font-serif text-xl text-white/70 italic">
+            {tournament?.year ?? 2026}
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card className="bg-green-900 border-green-700 text-white">
-            <CardHeader>
-              <CardTitle className="text-yellow-400 text-lg">Entries</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold">{entryCount}</p>
-              <p className="text-green-300 text-sm">teams submitted</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-green-900 border-green-700 text-white">
-            <CardHeader>
-              <CardTitle className="text-yellow-400 text-lg">Entry Fee</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold">${tournament?.entry_fee ?? 20}</p>
-              <p className="text-green-300 text-sm">per team</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-green-900 border-green-700 text-white">
-            <CardHeader>
-              <CardTitle className="text-yellow-400 text-lg">Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold capitalize">{tournament?.status ?? 'Setup'}</p>
-              {deadline && (
-                <p className="text-green-300 text-sm">
-                  Deadline: {deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+        {/* Stats */}
+        <div className="grid md:grid-cols-3 gap-px bg-white/10 rounded-lg overflow-hidden mb-12">
+          <div className="bg-masters-green/80 p-8 text-center">
+            <p className="uppercase tracking-widest text-masters-gold text-xs font-medium mb-2">Entries</p>
+            <p className="text-4xl font-serif font-bold text-white">{entryCount}</p>
+            <p className="text-white/50 text-sm mt-1">teams submitted</p>
+          </div>
+          <div className="bg-masters-green/80 p-8 text-center">
+            <p className="uppercase tracking-widest text-masters-gold text-xs font-medium mb-2">Entry Fee</p>
+            <p className="text-4xl font-serif font-bold text-white">${tournament?.entry_fee ?? 20}</p>
+            <p className="text-white/50 text-sm mt-1">per team</p>
+          </div>
+          <div className="bg-masters-green/80 p-8 text-center">
+            <p className="uppercase tracking-widest text-masters-gold text-xs font-medium mb-2">Status</p>
+            <p className="text-4xl font-serif font-bold text-white capitalize">{tournament?.status ?? 'Setup'}</p>
+            {deadline && (
+              <p className="text-white/50 text-sm mt-1">
+                Deadline: {deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
         </div>
 
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           {isOpen && (
             <Link href="/enter">
-              <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-green-950 font-bold text-lg px-8">
+              <Button size="lg" className="bg-masters-gold hover:bg-masters-gold-deep text-masters-dark font-bold text-lg px-10 uppercase tracking-wider">
                 Enter Your Team
               </Button>
             </Link>
           )}
           <Link href="/leaderboard">
-            <Button size="lg" variant="outline" className="border-green-500 text-green-200 hover:bg-green-800 text-lg px-8">
+            <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-lg px-10 uppercase tracking-wider">
               View Leaderboard
             </Button>
           </Link>

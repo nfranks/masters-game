@@ -124,7 +124,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-green-800 mb-2">Team Submitted!</h2>
+          <h2 className="text-2xl font-bold text-masters-green mb-2">Team Submitted!</h2>
           <p className="text-gray-600 mb-1">
             <strong>{teamName}</strong> by {firstName} {lastName}
           </p>
@@ -210,7 +210,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <Button
                 onClick={() => setStep('picks')}
                 disabled={!firstName || !lastName || !email || !teamName}
-                className="bg-green-700 hover:bg-green-800"
+                className="bg-masters-green hover:bg-masters-light"
               >
                 Next: Pick Your Team <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -240,7 +240,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
             <Button
               onClick={() => setStep('payment')}
               disabled={!allGroupsFilled || !allRulesMet}
-              className="bg-green-700 hover:bg-green-800"
+              className="bg-masters-green hover:bg-masters-light"
             >
               Next: Payment <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -340,7 +340,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <Button
                 onClick={() => setStep('review')}
                 disabled={!paymentOption}
-                className="bg-green-700 hover:bg-green-800"
+                className="bg-masters-green hover:bg-masters-light"
               >
                 Review Team <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -391,7 +391,7 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
               <Button
                 onClick={handleSubmit}
                 disabled={!canSubmit || submitting}
-                className="bg-yellow-500 hover:bg-yellow-600 text-green-950 font-bold px-8"
+                className="bg-masters-gold hover:bg-masters-gold-deep text-masters-dark font-bold px-8"
                 size="lg"
               >
                 {submitting ? (

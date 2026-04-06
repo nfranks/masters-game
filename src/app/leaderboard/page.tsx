@@ -84,18 +84,18 @@ export default function LeaderboardPage() {
     : data;
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
           <div className="flex items-center gap-3">
             {lastUpdated && (
-              <span className="text-green-300 text-xs">
+              <span className="text-white/50 text-xs">
                 Updated {lastUpdated.toLocaleTimeString()}
               </span>
             )}
-            <button onClick={fetchData} className="text-green-300 hover:text-white">
+            <button onClick={fetchData} className="text-white/50 hover:text-white">
               <RefreshCw className="w-4 h-4" />
             </button>
           </div>

@@ -64,12 +64,12 @@ export default function DailyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white">Daily Winners</h1>
-          <button onClick={() => fetchData(round)} className="text-green-300 hover:text-white">
+          <button onClick={() => fetchData(round)} className="text-white/50 hover:text-white">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>

@@ -7,9 +7,20 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-work-sans), Arial, Helvetica, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-mono: monospace;
+  --font-heading: var(--font-playfair), Georgia, "Times New Roman", serif;
+
+  /* Masters brand colors */
+  --color-masters-green: #006747;
+  --color-masters-dark: #193526;
+  --color-masters-light: #107d57;
+  --color-masters-gold: #fce300;
+  --color-masters-gold-deep: #f5c400;
+  --color-masters-cream: #f7f4f0;
+  --color-masters-warm: #eae7e0;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,72 +60,38 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #f7f4f0;
+  --foreground: #25282a;
+  --card: #ffffff;
+  --card-foreground: #25282a;
+  --popover: #ffffff;
+  --popover-foreground: #25282a;
+  --primary: #006747;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f2;
+  --secondary-foreground: #25282a;
+  --muted: #eae7e0;
+  --muted-foreground: #6b6f73;
+  --accent: #fce300;
+  --accent-foreground: #25282a;
+  --destructive: #df2f3b;
+  --border: #d9d9d6;
+  --input: #d9d9d6;
+  --ring: #006747;
+  --chart-1: #006747;
+  --chart-2: #107d57;
+  --chart-3: #fce300;
+  --chart-4: #53565a;
+  --chart-5: #b1b3b3;
+  --radius: 0.5rem;
+  --sidebar: #193526;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #fce300;
+  --sidebar-primary-foreground: #193526;
+  --sidebar-accent: #006747;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #006747;
+  --sidebar-ring: #107d57;
 }
 
 @layer base {
@@ -126,5 +103,8 @@
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
   }
 }

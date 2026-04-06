@@ -85,7 +85,7 @@ export function ScoreFetcher({ tournamentId, logs, golferResults }: Props) {
         <Button
           onClick={fetchScores}
           disabled={fetching}
-          className="bg-green-700 hover:bg-green-800"
+          className="bg-masters-green hover:bg-masters-light"
           size="lg"
         >
           <Download className="w-4 h-4 mr-2" />

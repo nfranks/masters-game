@@ -16,11 +16,11 @@ export default async function EnterPage() {
 
   if (!tournament || tournament.status !== 'open') {
     return (
-      <div className="min-h-screen bg-green-950">
+      <div className="min-h-screen bg-masters-dark">
         <Header />
         <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold text-white mb-4">Entries Closed</h1>
-          <p className="text-green-200">
+          <p className="text-white/70">
             {!tournament
               ? 'No tournament is currently configured.'
               : tournament.status === 'setup'
@@ -34,11 +34,11 @@ export default async function EnterPage() {
 
   if (tournament.entry_deadline && new Date(tournament.entry_deadline) < new Date()) {
     return (
-      <div className="min-h-screen bg-green-950">
+      <div className="min-h-screen bg-masters-dark">
         <Header />
         <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold text-white mb-4">Deadline Passed</h1>
-          <p className="text-green-200">The entry deadline has passed. Better luck next year!</p>
+          <p className="text-white/70">The entry deadline has passed. Better luck next year!</p>
         </main>
       </div>
     );
@@ -62,16 +62,16 @@ export default async function EnterPage() {
     .eq('tournament_id', tournament.id);
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Enter Your Team</h1>
-          <p className="text-green-200">
+          <p className="text-white/70">
             {tournament.name} {tournament.year} &mdash; ${tournament.entry_fee} entry fee
           </p>
           {tournament.entry_deadline && (
-            <p className="text-yellow-400 text-sm mt-1">
+            <p className="text-masters-gold text-sm mt-1">
               Deadline: {new Date(tournament.entry_deadline).toLocaleString()}
             </p>
           )}

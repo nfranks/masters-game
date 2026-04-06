@@ -67,7 +67,7 @@ export default async function TeamDetailPage({
     .sort((a: any, b: any) => (b.result?.total_points ?? 0) - (a.result?.total_points ?? 0));
 
   return (
-    <div className="min-h-screen bg-green-950">
+    <div className="min-h-screen bg-masters-dark">
       <Header />
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Card className="bg-white/95 mb-6">
@@ -80,7 +80,7 @@ export default async function TeamDetailPage({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-4xl font-bold text-green-700">{entry.total_points}</p>
+                <p className="text-4xl font-bold text-masters-green">{entry.total_points}</p>
                 <p className="text-sm text-gray-500">total points</p>
               </div>
             </div>

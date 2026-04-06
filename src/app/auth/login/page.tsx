@@ -22,10 +22,10 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-masters-dark p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-green-800">Masters Pool Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold text-masters-green">Masters Pool Admin</CardTitle>
           <CardDescription>
             Sign in with your Google account to access the admin dashboard.
           </CardDescription>
@@ -36,7 +36,7 @@ function LoginContent() {
               Your account is not authorized to access the admin dashboard.
             </div>
           )}
-          <Button onClick={handleLogin} className="w-full bg-green-700 hover:bg-green-800" size="lg">
+          <Button onClick={handleLogin} className="w-full bg-masters-green hover:bg-masters-light" size="lg">
             Sign in with Google
           </Button>
         </CardContent>
