@@ -49,7 +49,7 @@ export async function sendConfirmationEmail({
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #166534; padding: 24px; text-align: center;">
-        <h1 style="color: #facc15; margin: 0; font-size: 24px;">NME Masters Pool</h1>
+        <h1 style="color: #facc15; margin: 0; font-size: 24px;">The Masters Game</h1>
       </div>
       <div style="padding: 24px; background-color: #f9fafb;">
         <h2 style="color: #166534; margin-top: 0;">Team Submitted!</h2>
@@ -94,9 +94,9 @@ export async function sendConfirmationEmail({
 
   try {
     await transporter.sendMail({
-      from: `"NME Masters Pool" <${process.env.GMAIL_USER}>`,
+      from: `"The Masters Game" <${process.env.GMAIL_USER}>`,
       to,
-      subject: `Team Confirmed: ${teamName} - NME Masters Pool`,
+      subject: `Team Confirmed: ${teamName} - The Masters Game`,
       html,
     });
     return { success: true };

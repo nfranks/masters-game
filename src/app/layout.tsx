@@ -16,7 +16,7 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'NME Masters Pool',
+  title: 'The Masters Game',
   description: 'Masters Golf Tournament Pool Manager',
 };
 
