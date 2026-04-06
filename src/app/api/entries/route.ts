@@ -31,7 +31,6 @@ export async function POST(request: Request) {
     email,
     team_name,
     selections, // Record<groupId, golferId[]>
-    payment_method,
     paid_to,
   } = body;
 
@@ -125,7 +124,7 @@ export async function POST(request: Request) {
       email: email.trim().toLowerCase(),
       team_name: team_name.trim(),
       edit_token: editToken,
-      payment_method: payment_method || null,
+      payment_method: paid_to || null,
       paid_to: paid_to || null,
     })
     .select()
@@ -169,7 +168,6 @@ export async function POST(request: Request) {
     editLink,
     entryFee: tournament.entry_fee,
     deadline: tournament.entry_deadline,
-    paymentMethod: payment_method || null,
     paidTo: paid_to || null,
   }).catch((err) => console.error('Email failed:', err));
 

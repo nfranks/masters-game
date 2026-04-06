@@ -22,24 +22,12 @@ interface Props {
 type Step = 'info' | 'picks' | 'payment' | 'review';
 
 const PAYMENT_OPTIONS = [
-  {
-    value: 'venmo',
-    label: 'Venmo',
-    description: '**Send as personal** (QR code or https://venmo.com/u/Jack-Kavanagh)',
-    method: 'Venmo' as const,
-    paid_to: 'Jack Kavanagh',
-  },
-  {
-    value: 'paypal',
-    label: 'PayPal',
-    description: 'nmemastersgame@gmail.com **MUST SEND AS GIFT OR WILL BE REJECTED**',
-    method: 'PayPal' as const,
-    paid_to: 'nmemastersgame@gmail.com',
-  },
-  { value: 'matt', label: 'Matt G', description: 'Pay Matt G directly', method: 'Cash' as const, paid_to: 'Matt G' },
-  { value: 'charle', label: 'Charle', description: 'Pay Charle directly', method: 'Cash' as const, paid_to: 'Charle' },
-  { value: 'jack', label: 'Jack', description: 'Pay Jack directly', method: 'Cash' as const, paid_to: 'Jack' },
-  { value: 'someone_else', label: 'Someone else is paying for me', description: 'Enter the name of the person paying', method: 'Other' as const, paid_to: '' },
+  { value: 'venmo', label: 'Venmo (Preferred)', description: 'Scan QR code or tap the link below', paid_to: 'Venmo' },
+  { value: 'nate', label: 'Nate', description: 'Pay Nate directly', paid_to: 'Nate' },
+  { value: 'matt', label: 'Matt G', description: 'Pay Matt G directly', paid_to: 'Matt' },
+  { value: 'charle', label: 'Charle', description: 'Pay Charle directly', paid_to: 'Charle' },
+  { value: 'jack', label: 'Jack', description: 'Pay Jack directly', paid_to: 'Jack' },
+  { value: 'someone_else', label: 'Someone else is paying for me', description: 'Enter the name of the person paying', paid_to: '' },
 ];
 
 export function EntryForm({ tournament, groups, golfers, rules }: Props) {
@@ -101,7 +89,6 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
           email,
           team_name: teamName,
           selections,
-          payment_method: selectedPayment?.method,
           paid_to: effectivePaidTo,
         }),
       });
@@ -280,8 +267,31 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
             <CardTitle>Step 3: Payment (${tournament.entry_fee})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Please pay ${tournament.entry_fee} via one of the options below.
+            {/* Venmo preferred - always shown at top */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 text-center">
+              <p className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-3">
+                Preferred: Pay via Venmo
+              </p>
+              <img
+                src="/venmo-qr.jpg"
+                alt="Venmo QR Code"
+                className="w-48 h-48 mx-auto mb-3 rounded-lg"
+              />
+              <a
+                href="https://venmo.com/u/Jack-Kavanagh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
+              >
+                Open Venmo &mdash; @Jack-Kavanagh
+              </a>
+              <p className="text-xs text-blue-700 mt-3 font-medium">
+                Send as personal &bull; Put your <strong>Team Name</strong> in the payment description
+              </p>
+            </div>
+
+            <p className="text-sm text-gray-600 text-center">
+              Select how you are paying your ${tournament.entry_fee} entry fee:
             </p>
 
             <div className="space-y-3">
@@ -315,35 +325,6 @@ export function EntryForm({ tournament, groups, golfers, rules }: Props) {
                 </button>
               ))}
             </div>
-
-            {paymentOption === 'venmo' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                <img
-                  src="/venmo-qr.jpg"
-                  alt="Venmo QR Code"
-                  className="w-48 h-48 mx-auto mb-3 rounded-lg"
-                />
-                <p className="text-sm font-medium text-blue-800 mb-2">Venmo: @Jack-Kavanagh</p>
-                <a
-                  href="https://venmo.com/u/Jack-Kavanagh"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
-                >
-                  Open Venmo
-                </a>
-                <p className="text-xs text-blue-600 mt-2">Send as personal payment</p>
-              </div>
-            )}
-
-            {paymentOption === 'paypal' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                <p className="text-sm font-medium text-yellow-800 mb-2">
-                  PayPal: nmemastersgame@gmail.com
-                </p>
-                <p className="text-xs text-red-600 font-bold">MUST SEND AS GIFT OR WILL BE REJECTED</p>
-              </div>
-            )}
 
             {paymentOption === 'someone_else' && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

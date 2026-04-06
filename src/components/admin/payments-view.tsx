@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, DollarSign, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -43,27 +43,29 @@ interface Props {
 type SortField = 'name' | 'team_name' | 'paid_to' | 'payment_method' | 'is_paid';
 type SortDir = 'asc' | 'desc';
 
+const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle', 'Jack'];
+
 export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
   const [search, setSearch] = useState('');
-  const [filterDest, setFilterDest] = useState('all');
+  const [filterMethod, setFilterMethod] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sortField, setSortField] = useState<SortField>('paid_to');
+  const [sortField, setSortField] = useState<SortField>('payment_method');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  // Compute destination summaries
-  const destSummary = useMemo(() => {
+  // Summaries keyed off payment_method (admin-editable)
+  const methodSummary = useMemo(() => {
     const map = new Map<string, { total: number; paid: number; unpaid: number }>();
     for (const e of entries) {
-      const dest = e.paid_to || 'Unspecified';
-      if (!map.has(dest)) map.set(dest, { total: 0, paid: 0, unpaid: 0 });
-      const s = map.get(dest)!;
+      const method = e.payment_method || 'Unassigned';
+      if (!map.has(method)) map.set(method, { total: 0, paid: 0, unpaid: 0 });
+      const s = map.get(method)!;
       s.total++;
       if (e.is_paid) s.paid++;
       else s.unpaid++;
     }
     return Array.from(map.entries())
-      .map(([dest, stats]) => ({ dest, ...stats, collected: stats.paid * entryFee }))
+      .map(([method, stats]) => ({ method, ...stats, collected: stats.paid * entryFee }))
       .sort((a, b) => b.total - a.total);
   }, [entries, entryFee]);
 
@@ -85,9 +87,9 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
   const filtered = useMemo(() => {
     let result = entries;
 
-    if (filterDest !== 'all') {
-      if (filterDest === 'unspecified') result = result.filter((e) => !e.paid_to);
-      else result = result.filter((e) => e.paid_to === filterDest);
+    if (filterMethod !== 'all') {
+      if (filterMethod === 'unassigned') result = result.filter((e) => !e.payment_method);
+      else result = result.filter((e) => e.payment_method === filterMethod);
     }
 
     if (filterStatus === 'paid') result = result.filter((e) => e.is_paid);
@@ -113,7 +115,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [entries, search, filterDest, filterStatus, sortField, sortDir]);
+  }, [entries, search, filterMethod, filterStatus, sortField, sortDir]);
 
   const updateEntry = async (id: string, updates: Record<string, any>) => {
     try {
@@ -160,25 +162,25 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
         </Card>
       </div>
 
-      {/* Per-destination breakdown */}
+      {/* Per-method breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Collection by Destination</CardTitle>
+          <CardTitle className="text-lg">Collection by Method</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {destSummary.map(({ dest, total, paid, unpaid, collected }) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {methodSummary.map(({ method, total, paid, unpaid, collected }) => (
               <button
-                key={dest}
-                onClick={() => setFilterDest(filterDest === dest ? 'all' : (dest === 'Unspecified' ? 'unspecified' : dest))}
+                key={method}
+                onClick={() => setFilterMethod(filterMethod === method ? 'all' : (method === 'Unassigned' ? 'unassigned' : method))}
                 className={cn(
                   'p-4 rounded-lg border text-left transition-all',
-                  (filterDest === dest || (filterDest === 'unspecified' && dest === 'Unspecified'))
+                  (filterMethod === method || (filterMethod === 'unassigned' && method === 'Unassigned'))
                     ? 'border-masters-green bg-green-50 ring-1 ring-masters-green'
                     : 'border-gray-200 hover:border-masters-green/50'
                 )}
               >
-                <p className="font-medium text-sm truncate">{dest}</p>
+                <p className="font-medium text-sm truncate">{method}</p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-xl font-bold text-green-700">${collected}</span>
                   <span className="text-xs text-gray-500">of ${total * entryFee}</span>
@@ -204,15 +206,15 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
             className="pl-10"
           />
         </div>
-        <Select value={filterDest} onValueChange={(val) => val && setFilterDest(val)}>
+        <Select value={filterMethod} onValueChange={(val) => val && setFilterMethod(val)}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Destination" />
+            <SelectValue placeholder="Method" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All destinations</SelectItem>
-            <SelectItem value="unspecified">Unspecified</SelectItem>
-            {destSummary.filter((d) => d.dest !== 'Unspecified').map((d) => (
-              <SelectItem key={d.dest} value={d.dest}>{d.dest} ({d.total})</SelectItem>
+            <SelectItem value="all">All methods</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {methodSummary.filter((d) => d.method !== 'Unassigned').map((d) => (
+              <SelectItem key={d.method} value={d.method}>{d.method} ({d.total})</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -230,7 +232,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
 
       <p className="text-sm text-gray-500">
         Showing {filtered.length} entries
-        {filterDest !== 'all' && ` \u2022 ${filterDest === 'unspecified' ? 'No destination' : filterDest}`}
+        {filterMethod !== 'all' && ` \u2022 ${filterMethod === 'unassigned' ? 'Unassigned' : filterMethod}`}
         {filterStatus !== 'all' && ` \u2022 ${filterStatus}`}
       </p>
 
@@ -247,11 +249,11 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('team_name')}>
                     <span className="flex items-center">Team <SortIcon field="team_name" /></span>
                   </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('paid_to')}>
+                    <span className="flex items-center">Said They&apos;d Pay <SortIcon field="paid_to" /></span>
+                  </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('payment_method')}>
                     <span className="flex items-center">Method <SortIcon field="payment_method" /></span>
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('paid_to')}>
-                    <span className="flex items-center">Paying To <SortIcon field="paid_to" /></span>
                   </TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="cursor-pointer select-none text-center" onClick={() => handleSort('is_paid')}>
@@ -269,26 +271,23 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{entry.team_name}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {entry.paid_to ?? <span className="text-gray-300">-</span>}
+                    </TableCell>
                     <TableCell>
                       <Select
                         value={entry.payment_method ?? ''}
                         onValueChange={(val) => updateEntry(entry.id, { payment_method: val || null })}
                       >
-                        <SelectTrigger className="w-28 h-8 text-xs">
-                          <SelectValue placeholder="Method" />
+                        <SelectTrigger className="w-32 h-8 text-xs">
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Venmo">Venmo</SelectItem>
-                          <SelectItem value="PayPal">PayPal</SelectItem>
-                          <SelectItem value="Cash">Matt</SelectItem>
-                          <SelectItem value="Charle">Charle</SelectItem>
-                          <SelectItem value="Jack">Jack</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          {METHOD_OPTIONS.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {entry.paid_to ?? <span className="text-gray-300">-</span>}
                     </TableCell>
                     <TableCell className="text-right font-medium">${entryFee}</TableCell>
                     <TableCell className="text-center">
