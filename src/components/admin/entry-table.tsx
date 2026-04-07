@@ -13,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Archive, ArchiveRestore } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Archive, ArchiveRestore, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EntryRow {
@@ -30,6 +31,7 @@ interface EntryRow {
   updated_at: string;
   total_points: number;
   is_archived: boolean;
+  violations: string[];
   entry_golfers: { golfer: { name: string; group: { name: string } | null } }[];
 }
 
@@ -39,7 +41,7 @@ interface Props {
   entryFee: number;
 }
 
-type SortField = 'team_name' | 'name' | 'email' | 'created_at' | 'updated_at';
+type SortField = 'team_name' | 'name' | 'email' | 'created_at' | 'updated_at' | 'violations';
 type SortDir = 'asc' | 'desc';
 
 function formatTimestamp(ts: string) {
@@ -93,6 +95,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
         case 'email': cmp = a.email.localeCompare(b.email); break;
         case 'created_at': cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); break;
         case 'updated_at': cmp = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(); break;
+        case 'violations': cmp = a.violations.length - b.violations.length; break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -115,7 +118,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="py-3">
             <p className="text-sm text-gray-500">Active Entries</p>
@@ -126,6 +129,14 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
           <CardContent className="py-3">
             <p className="text-sm text-gray-500">Archived</p>
             <p className="text-2xl font-bold text-gray-400">{archivedEntries.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3">
+            <p className="text-sm text-gray-500">Rule Violations</p>
+            <p className="text-2xl font-bold text-red-600">
+              {activeEntries.filter((e) => e.violations.length > 0).length}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -173,6 +184,9 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('updated_at')}>
                     <span className="flex items-center">Last Updated <SortIcon field="updated_at" /></span>
                   </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('violations')}>
+                    <span className="flex items-center">Status <SortIcon field="violations" /></span>
+                  </TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -190,6 +204,24 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
                         ? formatTimestamp(entry.updated_at)
                         : <span className="text-gray-300">-</span>
                       }
+                    </TableCell>
+                    <TableCell>
+                      {entry.violations.length > 0 ? (
+                        <div className="group relative">
+                          <Badge className="bg-red-100 text-red-800 text-[10px] cursor-help">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            {entry.violations.length} violation{entry.violations.length > 1 ? 's' : ''}
+                          </Badge>
+                          <div className="hidden group-hover:block absolute z-10 bg-white border border-red-200 rounded-lg shadow-lg p-3 w-64 top-full left-0 mt-1">
+                            <p className="text-xs font-medium text-red-800 mb-1">Rule Violations:</p>
+                            {entry.violations.map((v, i) => (
+                              <p key={i} className="text-xs text-red-600">{v}</p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge className="bg-green-100 text-green-800 text-[10px]">OK</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
