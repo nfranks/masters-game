@@ -40,6 +40,7 @@ export interface Golfer {
   is_rookie: boolean;
   is_amateur: boolean;
   espn_athlete_id: string | null;
+  masters_player_id: string | null;
   created_at: string;
   updated_at: string;
 }
