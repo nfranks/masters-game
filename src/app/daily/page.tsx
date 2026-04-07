@@ -127,7 +127,7 @@ export default function DailyPage() {
                             </TableCell>
                             <TableCell className="font-medium">{item.entry.team_name}</TableCell>
                             <TableCell className="text-gray-600">
-                              {item.entry.first_name} {item.entry.last_name}
+                              {item.entry.first_name} {item.entry.last_name?.slice(0, 2)}.
                             </TableCell>
                             <TableCell className="text-center font-bold">
                               <span
