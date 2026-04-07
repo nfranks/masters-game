@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Check, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Group, Golfer } from '@/lib/types';
@@ -272,12 +273,66 @@ export function CsvUploader({ tournamentId, groups, initialGolfers }: Props) {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>{g.world_ranking ?? '-'}</TableCell>
-                      <TableCell className="text-sm">{g.region ?? '-'}</TableCell>
-                      <TableCell className="text-sm">{g.age_category ?? '-'}</TableCell>
-                      <TableCell className="space-x-1">
-                        {g.is_rookie && <Badge className="bg-blue-100 text-blue-800 text-[10px]">Rookie</Badge>}
-                        {g.is_amateur && <Badge className="bg-purple-100 text-purple-800 text-[10px]">Amateur</Badge>}
+                      <TableCell>
+                        <Input
+                          type="number"
+                          className="w-16 h-8 text-xs"
+                          defaultValue={g.world_ranking ?? ''}
+                          onBlur={(e) => {
+                            const val = e.target.value ? parseInt(e.target.value) : null;
+                            if (val !== g.world_ranking) updateGolfer(g.id, { world_ranking: val });
+                          }}
+                          placeholder="-"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={g.region ?? 'none'}
+                          onValueChange={(val) => val && updateGolfer(g.id, { region: val === 'none' ? null : val })}
+                        >
+                          <SelectTrigger className="w-28 h-8 text-xs">
+                            {g.region === 'United States' ? 'USA' : g.region ?? '-'}
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">-</SelectItem>
+                            <SelectItem value="United States">USA</SelectItem>
+                            <SelectItem value="Europe">Europe</SelectItem>
+                            <SelectItem value="International">International</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={g.age_category ?? 'none'}
+                          onValueChange={(val) => val && updateGolfer(g.id, { age_category: val === 'none' ? null : val })}
+                        >
+                          <SelectTrigger className="w-24 h-8 text-xs">
+                            {g.age_category ?? '-'}
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">-</SelectItem>
+                            <SelectItem value="Under 30">Under 30</SelectItem>
+                            <SelectItem value="Over 40">Over 40</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1 text-xs cursor-pointer">
+                            <Checkbox
+                              checked={g.is_rookie}
+                              onCheckedChange={(checked) => updateGolfer(g.id, { is_rookie: !!checked })}
+                            />
+                            Rookie
+                          </label>
+                          <label className="flex items-center gap-1 text-xs cursor-pointer">
+                            <Checkbox
+                              checked={g.is_amateur}
+                              onCheckedChange={(checked) => updateGolfer(g.id, { is_amateur: !!checked })}
+                            />
+                            Amateur
+                          </label>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
