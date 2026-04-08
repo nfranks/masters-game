@@ -21,9 +21,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No tournament found' }, { status: 404 });
   }
 
+  const { data: tournament_full } = await supabase
+    .from('tournament_config')
+    .select('status, entry_deadline')
+    .eq('id', tournament.id)
+    .single();
+
   const { data: entry } = await supabase
     .from('entries')
-    .select('id, team_name')
+    .select('id, team_name, edit_token')
     .eq('tournament_id', tournament.id)
     .eq('email', email.trim().toLowerCase())
     .eq('is_archived', false)
@@ -33,5 +39,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No entry found for this email' }, { status: 404 });
   }
 
-  return NextResponse.json({ entry_id: entry.id, team_name: entry.team_name });
+  const isEditable =
+    tournament_full?.status === 'open' &&
+    (!tournament_full?.entry_deadline || new Date(tournament_full.entry_deadline) > new Date());
+
+  return NextResponse.json({
+    entry_id: entry.id,
+    team_name: entry.team_name,
+    edit_token: entry.edit_token,
+    is_editable: isEditable,
+  });
 }
