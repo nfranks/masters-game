@@ -20,7 +20,8 @@ export default async function HomePage() {
     const { count } = await supabase
       .from('entries')
       .select('*', { count: 'exact', head: true })
-      .eq('tournament_id', tournament.id);
+      .eq('tournament_id', tournament.id)
+      .eq('is_archived', false);
     entryCount = count ?? 0;
   }
 
