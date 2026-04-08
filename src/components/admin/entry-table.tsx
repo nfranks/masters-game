@@ -61,6 +61,23 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
   const [showArchived, setShowArchived] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [teamColWidth, setTeamColWidth] = useState(150);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = teamColWidth;
+    const onMove = (me: MouseEvent) => {
+      const delta = me.clientX - startX;
+      setTeamColWidth(Math.max(80, Math.min(400, startWidth + delta)));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
 
   const activeEntries = entries.filter((e) => !e.is_archived);
   const archivedEntries = entries.filter((e) => e.is_archived);
@@ -166,11 +183,17 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-auto">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('team_name')}>
-                    <span className="flex items-center">Team <SortIcon field="team_name" /></span>
+                  <TableHead className="select-none relative" style={{ width: teamColWidth, minWidth: teamColWidth, maxWidth: teamColWidth }}>
+                    <span className="flex items-center cursor-pointer" onClick={() => handleSort('team_name')}>
+                      Team <SortIcon field="team_name" />
+                    </span>
+                    <div
+                      onMouseDown={handleResizeStart}
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-masters-green/20 active:bg-masters-green/30"
+                    />
                   </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>
                     <span className="flex items-center">Name <SortIcon field="name" /></span>
@@ -193,7 +216,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
               <TableBody>
                 {filtered.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-medium max-w-[150px] truncate">{entry.team_name}</TableCell>
+                    <TableCell className="font-medium truncate" style={{ maxWidth: teamColWidth }}>{entry.team_name}</TableCell>
                     <TableCell>{entry.first_name} {entry.last_name}</TableCell>
                     <TableCell className="text-sm text-gray-500">{entry.email}</TableCell>
                     <TableCell className="text-sm text-gray-500 whitespace-nowrap">
