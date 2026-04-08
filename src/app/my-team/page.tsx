@@ -112,7 +112,7 @@ export default function MyTeamPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <Link href={`/team/${result.entry_id}`}>
+                  <Link href={`/team/${result.entry_id}?token=${result.edit_token}`}>
                     <Button className="w-full bg-masters-green hover:bg-masters-light" size="lg">
                       <Eye className="w-4 h-4 mr-2" />
                       View Team Dashboard

@@ -3,15 +3,20 @@ import { Header } from '@/components/shared/header';
 import { Card, CardContent } from '@/components/ui/card';
 import { TeamRoster } from '@/components/leaderboard/team-roster';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TeamDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ token?: string }>;
 }) {
   const { id } = await params;
+  const { token } = await searchParams;
   const supabase = createServiceClient();
 
   const { data: entry } = await supabase
@@ -30,6 +35,20 @@ export default async function TeamDetailPage({
     .single();
 
   if (!entry) return notFound();
+
+  // Check if user can edit (token matches + entries still open)
+  const canEdit = token && token === entry.edit_token;
+  let isEditable = false;
+  if (canEdit) {
+    const { data: tournament } = await supabase
+      .from('tournament_config')
+      .select('status, entry_deadline')
+      .eq('id', entry.tournament_id)
+      .single();
+    isEditable =
+      tournament?.status === 'open' &&
+      (!tournament?.entry_deadline || new Date(tournament.entry_deadline) > new Date());
+  }
 
   const golferIds = entry.entry_golfers?.map((eg: any) => eg.golfer?.id).filter(Boolean) ?? [];
 
@@ -78,13 +97,22 @@ export default async function TeamDetailPage({
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Team Header */}
         <Card className="bg-white/95 mb-6 overflow-hidden">
-          <div className="bg-masters-green p-6 text-center">
+          <div className="bg-masters-green p-6 text-center relative">
             <h1 className="font-serif text-3xl font-bold text-white mb-1">
               {entry.team_name}
             </h1>
             <p className="text-white/70">
               {entry.first_name} {entry.last_name}
             </p>
+            {canEdit && isEditable && (
+              <Link
+                href={`/team/${id}/edit?token=${token}`}
+                className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+                Edit Picks
+              </Link>
+            )}
           </div>
           <CardContent className="py-4">
             <div className="grid grid-cols-6 text-center divide-x">
