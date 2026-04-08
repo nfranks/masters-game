@@ -183,7 +183,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-auto">
-            <Table className="table-fixed">
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="select-none relative" style={{ width: teamColWidth, minWidth: teamColWidth, maxWidth: teamColWidth }}>
