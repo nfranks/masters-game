@@ -19,14 +19,14 @@ export function Header() {
           <Link href="/enter" className="text-white/80 hover:text-masters-gold transition-colors">
             Enter
           </Link>
+          <Link href="/my-team" className="text-white/80 hover:text-masters-gold transition-colors">
+            My Team
+          </Link>
           <Link href="/leaderboard" className="text-white/80 hover:text-masters-gold transition-colors">
             Leaderboard
           </Link>
           <Link href="/daily" className="text-white/80 hover:text-masters-gold transition-colors">
             Daily
-          </Link>
-          <Link href="/my-team" className="text-white/80 hover:text-masters-gold transition-colors">
-            My Team
           </Link>
           <Link href="/venmo" className="text-white/80 hover:text-masters-gold transition-colors">
             Venmo
@@ -53,6 +53,13 @@ export function Header() {
             Enter Your Team
           </Link>
           <Link
+            href="/my-team"
+            className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            My Team
+          </Link>
+          <Link
             href="/leaderboard"
             className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
             onClick={() => setMenuOpen(false)}
@@ -65,13 +72,6 @@ export function Header() {
             onClick={() => setMenuOpen(false)}
           >
             Daily Winners
-          </Link>
-          <Link
-            href="/my-team"
-            className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
-            onClick={() => setMenuOpen(false)}
-          >
-            My Team
           </Link>
           <Link
             href="/venmo"
