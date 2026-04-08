@@ -78,6 +78,11 @@ export default async function HomePage() {
               </Button>
             </Link>
           )}
+          <Link href="/my-team" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 text-lg px-10 uppercase tracking-wider">
+              View Your Team
+            </Button>
+          </Link>
           <Link href="/leaderboard" className="w-full sm:w-auto">
             <Button size="lg" className="w-full sm:w-auto bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 text-lg px-10 uppercase tracking-wider">
               View Leaderboard

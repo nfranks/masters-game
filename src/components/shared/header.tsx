@@ -25,6 +25,9 @@ export function Header() {
           <Link href="/daily" className="text-white/80 hover:text-masters-gold transition-colors">
             Daily
           </Link>
+          <Link href="/my-team" className="text-white/80 hover:text-masters-gold transition-colors">
+            My Team
+          </Link>
         </nav>
 
         {/* Mobile hamburger */}
@@ -59,6 +62,13 @@ export function Header() {
             onClick={() => setMenuOpen(false)}
           >
             Daily Winners
+          </Link>
+          <Link
+            href="/my-team"
+            className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            My Team
           </Link>
         </nav>
       )}
