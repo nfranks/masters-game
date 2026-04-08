@@ -193,7 +193,7 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
               <TableBody>
                 {filtered.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-medium">{entry.team_name}</TableCell>
+                    <TableCell className="font-medium max-w-[150px] truncate">{entry.team_name}</TableCell>
                     <TableCell>{entry.first_name} {entry.last_name}</TableCell>
                     <TableCell className="text-sm text-gray-500">{entry.email}</TableCell>
                     <TableCell className="text-sm text-gray-500 whitespace-nowrap">

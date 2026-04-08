@@ -270,7 +270,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
                         <p className="text-xs text-gray-400">{entry.email}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{entry.team_name}</TableCell>
+                    <TableCell className="text-sm max-w-[150px] truncate">{entry.team_name}</TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {entry.paid_to ?? <span className="text-gray-300">-</span>}
                     </TableCell>
