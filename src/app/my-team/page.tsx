@@ -52,15 +52,15 @@ export default function MyTeamPage() {
       <Header />
       <main className="max-w-md mx-auto px-4 py-16">
         <Card className="bg-white/95">
-          <CardHeader className="text-center">
+          <CardHeader className="text-center pb-2">
             <CardTitle className="font-serif text-2xl text-masters-green">
               View Your Team
             </CardTitle>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 mt-2">
               Enter the email you used when submitting your team.
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email">Email Address</Label>
