@@ -1,18 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { Header } from '@/components/shared/header';
-import { GolferPhoto } from '@/components/shared/golfer-photo';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { TeamRoster } from '@/components/leaderboard/team-roster';
 import { notFound } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-
-function formatPar(par: number | null) {
-  if (par === null || par === undefined) return '-';
-  if (par === 0) return 'E';
-  return par > 0 ? `+${par}` : `${par}`;
-}
 
 export default async function TeamDetailPage({
   params,
@@ -114,161 +106,8 @@ export default async function TeamDetailPage({
           </CardContent>
         </Card>
 
-        {/* Golfer Cards */}
-        <div className="space-y-3">
-          {golferDetails.map((gd: any) => {
-            const g = gd.golfer;
-            if (!g) return null;
-            const result = gd.result;
-            const mastersUrl = g.masters_player_id
-              ? `https://www.masters.com/en_US/players/player_${g.masters_player_id}.html`
-              : null;
-
-            return (
-              <Card key={g.id} className="bg-white/95 overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex items-stretch">
-                    {/* Left: Photo + Info */}
-                    <div className="flex items-center gap-4 p-4 flex-1 min-w-0">
-                      <GolferPhoto
-                        name={g.name}
-                        mastersPlayerId={g.masters_player_id}
-                        size={56}
-                        className="flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          {mastersUrl ? (
-                            <a
-                              href={mastersUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-serif font-bold text-masters-green hover:underline flex items-center gap-1 truncate"
-                            >
-                              {g.name}
-                              <ExternalLink className="w-3 h-3 flex-shrink-0 opacity-50" />
-                            </a>
-                          ) : (
-                            <span className="font-serif font-bold text-masters-green truncate">
-                              {g.name}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-bold">
-                            {g.group?.name}
-                          </Badge>
-                          {g.world_ranking && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              #{g.world_ranking}
-                            </Badge>
-                          )}
-                          {g.region && (
-                            <Badge
-                              className={`text-[10px] px-1.5 py-0 ${
-                                g.region === 'Europe'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : g.region === 'International'
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}
-                            >
-                              {g.region === 'United States' ? 'USA' : g.region}
-                            </Badge>
-                          )}
-                          {g.age_category && (
-                            <Badge className="text-[10px] px-1.5 py-0 bg-purple-100 text-purple-800">
-                              {g.age_category}
-                            </Badge>
-                          )}
-                          {g.is_rookie && (
-                            <Badge className="text-[10px] px-1.5 py-0 bg-green-100 text-green-800">
-                              Rookie
-                            </Badge>
-                          )}
-                        </div>
-                        {/* Position + Cut */}
-                        {result && (
-                          <div className="flex gap-2 mt-1.5 text-xs text-gray-500">
-                            {result.final_position && (
-                              <span>
-                                Pos: <strong className="text-gray-800">T{result.final_position}</strong>
-                              </span>
-                            )}
-                            {result.made_cut ? (
-                              <span className="text-green-600">Made Cut</span>
-                            ) : result.made_cut === false ? (
-                              <span className="text-red-500">Missed Cut</span>
-                            ) : null}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Points Grid */}
-                    <div className="flex items-center border-l">
-                      <div className="grid grid-cols-6 text-center min-w-[300px]">
-                        {/* Header row */}
-                        <div className="text-[9px] uppercase tracking-wider text-gray-400 py-1 px-1 border-b bg-gray-50">Thu</div>
-                        <div className="text-[9px] uppercase tracking-wider text-gray-400 py-1 px-1 border-b bg-gray-50">Fri</div>
-                        <div className="text-[9px] uppercase tracking-wider text-gray-400 py-1 px-1 border-b bg-gray-50">Sat</div>
-                        <div className="text-[9px] uppercase tracking-wider text-gray-400 py-1 px-1 border-b bg-gray-50">Sun</div>
-                        <div className="text-[9px] uppercase tracking-wider text-gray-400 py-1 px-1 border-b bg-gray-50">Trn</div>
-                        <div className="text-[9px] uppercase tracking-wider text-masters-gold py-1 px-1 border-b bg-masters-green/5 font-bold">Tot</div>
-
-                        {/* Strokes row */}
-                        {[1, 2, 3, 4].map((r) => {
-                          const score = gd.scores.find((s: any) => s.round_number === r);
-                          return (
-                            <div key={`strokes-${r}`} className="py-1 px-1 text-xs text-gray-500">
-                              {score?.total_strokes ?? '-'}
-                            </div>
-                          );
-                        })}
-                        <div className="py-1 px-1 text-xs text-gray-500">
-                          {result?.final_position ? `T${result.final_position}` : '-'}
-                        </div>
-                        <div className="py-1 px-1 text-xs text-gray-400">
-                          {formatPar(result?.total_score_to_par ?? null)}
-                        </div>
-
-                        {/* Points row */}
-                        {[1, 2, 3, 4].map((r) => {
-                          const score = gd.scores.find((s: any) => s.round_number === r);
-                          if (!score) return <div key={`pts-${r}`} className="py-1 px-1 text-sm font-bold">-</div>;
-                          const pts =
-                            (score.eagles ?? 0) * 1 +
-                            (score.double_eagles ?? 0) * 3 +
-                            (score.holes_in_one ?? 0) * 5 +
-                            (score.is_best_round_of_day ? 5 : 0);
-                          return (
-                            <div key={`pts-${r}`} className="py-1 px-1">
-                              <span className={`text-sm font-bold ${pts > 0 ? 'text-masters-green' : 'text-gray-300'}`}>
-                                {pts}
-                              </span>
-                              {((score.eagles ?? 0) > 0 || (score.holes_in_one ?? 0) > 0) && (
-                                <div className="text-[9px] text-gray-400 leading-tight">
-                                  {score.eagles > 0 && `${score.eagles}E`}
-                                  {score.holes_in_one > 0 && ` ${score.holes_in_one}HIO`}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                        <div className="py-1 px-1 text-sm font-bold text-masters-green">
-                          {result?.tournament_points ?? 0}
-                        </div>
-                        <div className="py-1 px-1 text-sm font-bold text-masters-gold bg-masters-green/5">
-                          {result?.total_points ?? 0}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Roster Grid + Expandable Detail */}
+        <TeamRoster golferDetails={golferDetails} />
       </main>
     </div>
   );
