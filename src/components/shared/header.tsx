@@ -28,6 +28,9 @@ export function Header() {
           <Link href="/my-team" className="text-white/80 hover:text-masters-gold transition-colors">
             My Team
           </Link>
+          <Link href="/venmo" className="text-white/80 hover:text-masters-gold transition-colors">
+            Venmo
+          </Link>
         </nav>
 
         {/* Mobile hamburger */}
@@ -69,6 +72,13 @@ export function Header() {
             onClick={() => setMenuOpen(false)}
           >
             My Team
+          </Link>
+          <Link
+            href="/venmo"
+            className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            Venmo
           </Link>
         </nav>
       )}
