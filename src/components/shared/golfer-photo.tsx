@@ -4,23 +4,13 @@ import { useState } from 'react';
 
 interface Props {
   name: string;
-  espnAthleteId?: string | null;
+  mastersPlayerId?: string | null;
   size?: number;
   className?: string;
 }
 
-// Try multiple ESPN CDN URL formats
-function getPhotoUrls(id: string): string[] {
-  return [
-    `https://a.espn.com/i/headshots/golf/players/full/${id}.png`,
-    `https://a.espn.com/combiner/i?img=/i/headshots/golf/players/full/${id}.png`,
-    `https://secure.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/${id}.png`,
-  ];
-}
-
-export function GolferPhoto({ name, espnAthleteId, size = 64, className = '' }: Props) {
-  const [urlIndex, setUrlIndex] = useState(0);
-  const [allFailed, setAllFailed] = useState(false);
+export function GolferPhoto({ name, mastersPlayerId, size = 64, className = '' }: Props) {
+  const [imgError, setImgError] = useState(false);
 
   const initials = name
     .split(' ')
@@ -29,23 +19,15 @@ export function GolferPhoto({ name, espnAthleteId, size = 64, className = '' }: 
     .join('')
     .toUpperCase();
 
-  const urls = espnAthleteId ? getPhotoUrls(espnAthleteId) : [];
-
-  if (espnAthleteId && !allFailed && urlIndex < urls.length) {
+  if (mastersPlayerId && !imgError) {
     return (
       <img
-        src={urls[urlIndex]}
+        src={`https://images.masters.com/players/2026/240x240/${mastersPlayerId}.jpg`}
         alt={name}
         width={size}
         height={size}
         className={`rounded-full object-cover bg-gray-100 ${className}`}
-        onError={() => {
-          if (urlIndex + 1 < urls.length) {
-            setUrlIndex(urlIndex + 1);
-          } else {
-            setAllFailed(true);
-          }
-        }}
+        onError={() => setImgError(true)}
       />
     );
   }

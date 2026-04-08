@@ -132,7 +132,7 @@ export default async function TeamDetailPage({
                     <div className="flex items-center gap-4 p-4 flex-1 min-w-0">
                       <GolferPhoto
                         name={g.name}
-                        espnAthleteId={g.espn_athlete_id}
+                        mastersPlayerId={g.masters_player_id}
                         size={56}
                         className="flex-shrink-0"
                       />
