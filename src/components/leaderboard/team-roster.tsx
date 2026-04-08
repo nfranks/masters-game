@@ -17,7 +17,7 @@ interface GolferDetail {
     is_rookie: boolean;
     is_amateur: boolean;
     masters_player_id: string | null;
-    group: { name: string } | null;
+    group: { name: string; display_order?: number } | null;
   };
   result: {
     final_position: number | null;

@@ -27,7 +27,7 @@ export default async function TeamDetailPage({
         golfer:golfers (
           id, name, first_name, last_name, world_ranking, region, age_category,
           is_rookie, is_amateur, espn_athlete_id, masters_player_id,
-          group:groups ( name )
+          group:groups ( name, display_order )
         )
       )
     `)
@@ -70,7 +70,7 @@ export default async function TeamDetailPage({
       result: resultsMap.get(eg.golfer?.id) ?? null,
       scores: scoresMap.get(eg.golfer?.id) ?? [],
     }))
-    .sort((a: any, b: any) => (b.result?.total_points ?? 0) - (a.result?.total_points ?? 0));
+    .sort((a: any, b: any) => (a.golfer?.group?.display_order ?? 99) - (b.golfer?.group?.display_order ?? 99));
 
   // Calculate team totals by round
   const roundTotals = [1, 2, 3, 4].map((r) => {
@@ -97,7 +97,7 @@ export default async function TeamDetailPage({
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Team Header */}
         <Card className="bg-white/95 mb-6 overflow-hidden">
-          <div className="bg-masters-green p-6 text-center relative">
+          <div className="bg-masters-green p-6 text-center">
             <h1 className="font-serif text-3xl font-bold text-white mb-1">
               {entry.team_name}
             </h1>
@@ -107,7 +107,7 @@ export default async function TeamDetailPage({
             {canEdit && isEditable && (
               <Link
                 href={`/team/${id}/edit?token=${token}`}
-                className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-4 py-2 rounded-full transition-colors mt-3"
               >
                 <Pencil className="w-3 h-3" />
                 Edit Picks
