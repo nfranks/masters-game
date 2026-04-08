@@ -22,7 +22,7 @@ export function GolferPhoto({ name, espnAthleteId, size = 64, className = '' }: 
   if (espnAthleteId && !imgError) {
     return (
       <img
-        src={`https://a.espn.com/combiner/i?img=/i/headshots/golf/players/full/${espnAthleteId}.png&w=${size * 2}&h=${size * 2}`}
+        src={`https://a.espn.com/i/headshots/golf/players/full/${espnAthleteId}.png`}
         alt={name}
         width={size}
         height={size}
