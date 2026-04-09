@@ -271,7 +271,7 @@ export default function LeaderboardPage() {
                                       <TableCell className="text-center text-sm">
                                         {gd.result?.final_position
                                           ? `T${gd.result.final_position}`
-                                          : gd.result?.made_cut === false
+                                          : (gd.result?.made_cut === false && gd.scores.some((s) => s.round_number === 2 && s.total_strokes != null))
                                           ? 'MC'
                                           : '-'}
                                       </TableCell>

@@ -198,11 +198,14 @@ export function TeamRoster({ golferDetails }: { golferDetails: GolferDetail[] })
                     Position: <strong className="text-gray-900">T{expanded.result.final_position}</strong>
                   </span>
                 )}
-                {expanded.result.made_cut ? (
-                  <Badge className="bg-green-100 text-green-800 text-xs">Made Cut</Badge>
-                ) : expanded.result.made_cut === false ? (
-                  <Badge className="bg-red-100 text-red-800 text-xs">Missed Cut</Badge>
-                ) : null}
+                {/* Only show cut status after R2 exists */}
+                {expanded.scores.some((s) => s.round_number === 2 && s.total_strokes != null) && (
+                  expanded.result.made_cut ? (
+                    <Badge className="bg-green-100 text-green-800 text-xs">Made Cut</Badge>
+                  ) : (
+                    <Badge className="bg-red-100 text-red-800 text-xs">Missed Cut</Badge>
+                  )
+                )}
                 {expanded.result.total_score_to_par !== null && (
                   <span className="text-gray-600">
                     Total: <strong>{formatPar(expanded.result.total_score_to_par)}</strong>
