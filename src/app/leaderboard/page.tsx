@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronDown, ChevronRight, Search, RefreshCw } from 'lucide-react';
+import { ScoringRulesPopout } from '@/components/shared/scoring-rules';
 
 interface LeaderboardEntry {
   rank: number;
@@ -101,6 +102,7 @@ export default function LeaderboardPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
           <div className="flex items-center gap-3">
+            <ScoringRulesPopout />
             {lastUpdated && (
               <span className="text-white/50 text-xs">
                 Scores as of{' '}

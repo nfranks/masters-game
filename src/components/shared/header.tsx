@@ -28,6 +28,9 @@ export function Header() {
           <Link href="/daily" className="text-white/80 hover:text-masters-gold transition-colors">
             Daily
           </Link>
+          <Link href="/scoring" className="text-white/80 hover:text-masters-gold transition-colors">
+            Scoring
+          </Link>
           <Link href="/venmo" className="text-white/80 hover:text-masters-gold transition-colors">
             Venmo
           </Link>
@@ -72,6 +75,13 @@ export function Header() {
             onClick={() => setMenuOpen(false)}
           >
             Daily Winners
+          </Link>
+          <Link
+            href="/scoring"
+            className="text-white/90 text-sm font-medium uppercase tracking-widest py-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            Scoring Rules
           </Link>
           <Link
             href="/venmo"

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { RefreshCw } from 'lucide-react';
+import { ScoringRulesPopout } from '@/components/shared/scoring-rules';
 
 const ROUNDS = [
   { value: '1', label: 'Thursday' },
@@ -69,9 +70,12 @@ export default function DailyPage() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white">Daily Winners</h1>
-          <button onClick={() => fetchData(round)} className="text-white/50 hover:text-white">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <ScoringRulesPopout />
+            <button onClick={() => fetchData(round)} className="text-white/50 hover:text-white">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <Tabs value={round} onValueChange={setRound}>
