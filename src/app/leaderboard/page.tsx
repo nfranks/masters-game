@@ -93,7 +93,13 @@ export default function LeaderboardPage() {
           <div className="flex items-center gap-3">
             {lastUpdated && (
               <span className="text-white/50 text-xs">
-                Updated {lastUpdated.toLocaleTimeString()}
+                Scores as of{' '}
+                {lastUpdated.toLocaleString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  timeZone: 'America/New_York',
+                })}{' '}
+                ET
               </span>
             )}
             <button onClick={fetchData} className="text-white/50 hover:text-white">

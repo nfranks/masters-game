@@ -2,16 +2,60 @@ import type { ESPNResponse, ESPNCompetitor } from './types';
 
 const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/golf/pga';
 
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [1000, 3000, 8000]; // exponential-ish backoff
+const FETCH_TIMEOUT = 15000; // 15 second timeout
+
+async function fetchWithRetry(url: string): Promise<ESPNResponse> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+      const res = await fetch(url, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        throw new Error(`ESPN API error: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      // Sanity check: ESPN sometimes returns empty/malformed responses
+      if (!data || typeof data !== 'object') {
+        throw new Error('ESPN returned empty or malformed response');
+      }
+
+      return data;
+    } catch (err: any) {
+      lastError = err;
+      const isTimeout = err.name === 'AbortError';
+      const retryable = isTimeout || err.message?.includes('ESPN API error: 5');
+
+      if (attempt < MAX_RETRIES && retryable) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+        continue;
+      }
+
+      // Non-retryable error or exhausted retries
+      break;
+    }
+  }
+
+  throw lastError ?? new Error('ESPN fetch failed after retries');
+}
+
 export async function fetchScoreboard(): Promise<ESPNResponse> {
-  const res = await fetch(`${BASE_URL}/scoreboard`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`ESPN API error: ${res.status}`);
-  return res.json();
+  return fetchWithRetry(`${BASE_URL}/scoreboard`);
 }
 
 export async function fetchEventScoreboard(eventId: string): Promise<ESPNResponse> {
-  const res = await fetch(`${BASE_URL}/scoreboard?event=${eventId}`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`ESPN API error: ${res.status}`);
-  return res.json();
+  return fetchWithRetry(`${BASE_URL}/scoreboard?event=${eventId}`);
 }
 
 // Augusta National par values (standard)

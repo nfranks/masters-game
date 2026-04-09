@@ -18,7 +18,7 @@ export default async function ScoringPage() {
     .select('*')
     .eq('tournament_id', tournament?.id ?? '')
     .order('fetched_at', { ascending: false })
-    .limit(10);
+    .limit(20);
 
   const { data: golferResults } = await supabase
     .from('golfer_results')
@@ -34,6 +34,7 @@ export default async function ScoringPage() {
       <h1 className="text-3xl font-bold text-gray-900">Scoring</h1>
       <ScoreFetcher
         tournamentId={tournament?.id ?? ''}
+        autoFetchPaused={tournament?.auto_fetch_paused ?? false}
         logs={logs ?? []}
         golferResults={golferResults ?? []}
       />

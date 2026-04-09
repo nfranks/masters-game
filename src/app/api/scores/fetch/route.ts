@@ -7,7 +7,7 @@ import { recalculateAll } from '@/lib/scoring/calculator';
 export async function POST(request: Request) {
   const supabase = createServiceClient();
   const body = await request.json();
-  const { tournament_id } = body;
+  const { tournament_id, source = 'manual' } = body;
 
   // Get tournament config
   const { data: tournament } = await supabase
@@ -121,6 +121,7 @@ export async function POST(request: Request) {
       tournament_id,
       status: 'success',
       golfers_updated: updated,
+      source,
     });
 
     return NextResponse.json({
@@ -134,6 +135,7 @@ export async function POST(request: Request) {
       tournament_id,
       status: 'error',
       error_message: err.message,
+      source,
     });
 
     return NextResponse.json({ error: err.message }, { status: 500 });
