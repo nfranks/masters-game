@@ -28,13 +28,30 @@ interface Props {
   }[];
   golferResults: {
     id: string;
+    golfer_id: string;
     total_points: number;
     daily_points: number;
     tournament_points: number;
+    total_score_to_par: number | null;
     made_cut: boolean;
     final_position: number | null;
     golfer: { name: string; group: { name: string } | null };
   }[];
+  golferScores: {
+    golfer_id: string;
+    round_number: number;
+    score_to_par: number | null;
+    eagles: number;
+    double_eagles: number;
+    holes_in_one: number;
+    hole_scores: number[] | null;
+  }[];
+}
+
+function formatPar(par: number | null) {
+  if (par === null || par === undefined) return '-';
+  if (par === 0) return 'E';
+  return par > 0 ? `+${par}` : `${par}`;
 }
 
 function timeAgo(dateStr: string) {
@@ -63,7 +80,7 @@ function formatTimestamp(ts: string) {
   }) + ' ET';
 }
 
-export function ScoreFetcher({ tournamentId, autoFetchPaused: initialPaused, logs, golferResults }: Props) {
+export function ScoreFetcher({ tournamentId, autoFetchPaused: initialPaused, logs, golferResults, golferScores }: Props) {
   const [fetching, setFetching] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
@@ -329,13 +346,19 @@ export function ScoreFetcher({ tournamentId, autoFetchPaused: initialPaused, log
             <CardTitle>Golfer Points</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="max-h-96 overflow-auto">
+            <div className="max-h-[600px] overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Golfer</TableHead>
                     <TableHead>Group</TableHead>
                     <TableHead className="text-center">Pos</TableHead>
+                    <TableHead className="text-center">Tourn</TableHead>
+                    <TableHead className="text-center">R1</TableHead>
+                    <TableHead className="text-center">R2</TableHead>
+                    <TableHead className="text-center">R3</TableHead>
+                    <TableHead className="text-center">R4</TableHead>
+                    <TableHead className="text-center">Eagles</TableHead>
                     <TableHead className="text-center">Cut</TableHead>
                     <TableHead className="text-right">Daily</TableHead>
                     <TableHead className="text-right">Tournament</TableHead>
@@ -343,23 +366,67 @@ export function ScoreFetcher({ tournamentId, autoFetchPaused: initialPaused, log
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {golferResults.map((gr) => (
-                    <TableRow key={gr.id}>
-                      <TableCell className="font-medium">{gr.golfer?.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{gr.golfer?.group?.name ?? '?'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {gr.final_position ?? '-'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {gr.made_cut ? 'Yes' : 'No'}
-                      </TableCell>
-                      <TableCell className="text-right">{gr.daily_points}</TableCell>
-                      <TableCell className="text-right">{gr.tournament_points}</TableCell>
-                      <TableCell className="text-right font-bold">{gr.total_points}</TableCell>
-                    </TableRow>
-                  ))}
+                  {golferResults.map((gr) => {
+                    const scores = golferScores.filter((s) => s.golfer_id === gr.golfer_id);
+                    const totalEagles = scores.reduce((sum, s) => sum + (s.eagles ?? 0) + (s.double_eagles ?? 0), 0);
+                    const totalHios = scores.reduce((sum, s) => sum + (s.holes_in_one ?? 0), 0);
+
+                    return (
+                      <TableRow key={gr.id}>
+                        <TableCell className="font-medium text-sm">{gr.golfer?.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{gr.golfer?.group?.name ?? '?'}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center text-sm">
+                          {gr.final_position ?? '-'}
+                        </TableCell>
+                        <TableCell className="text-center text-sm font-medium">
+                          <span className={
+                            (gr.total_score_to_par ?? 0) < 0 ? 'text-red-600' :
+                            (gr.total_score_to_par ?? 0) > 0 ? 'text-blue-600' : ''
+                          }>
+                            {formatPar(gr.total_score_to_par)}
+                          </span>
+                        </TableCell>
+                        {[1, 2, 3, 4].map((r) => {
+                          const roundScore = scores.find((s) => s.round_number === r);
+                          const holesPlayed = roundScore?.hole_scores?.length ?? 0;
+                          const isComplete = holesPlayed >= 18;
+                          return (
+                            <TableCell key={r} className="text-center text-sm">
+                              {roundScore ? (
+                                <span className={
+                                  (roundScore.score_to_par ?? 0) < 0 ? 'text-red-600' :
+                                  (roundScore.score_to_par ?? 0) > 0 ? 'text-blue-600' : ''
+                                }>
+                                  {formatPar(roundScore.score_to_par)}
+                                  {!isComplete && holesPlayed > 0 && (
+                                    <span className="text-[10px] text-gray-400 ml-0.5">
+                                      ({holesPlayed})
+                                    </span>
+                                  )}
+                                </span>
+                              ) : '-'}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="text-center text-sm">
+                          {totalEagles > 0 || totalHios > 0 ? (
+                            <span className="text-green-700 font-medium">
+                              {totalEagles > 0 && `${totalEagles}🦅`}
+                              {totalHios > 0 && ` ${totalHios}🕳️`}
+                            </span>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell className="text-center text-sm">
+                          {gr.made_cut ? 'Yes' : 'No'}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">{gr.daily_points}</TableCell>
+                        <TableCell className="text-right text-sm">{gr.tournament_points}</TableCell>
+                        <TableCell className="text-right font-bold text-sm">{gr.total_points}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

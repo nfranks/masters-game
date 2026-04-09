@@ -13,30 +13,38 @@ export default async function ScoringPage() {
     .limit(1)
     .single();
 
-  const { data: logs } = await supabase
-    .from('score_fetch_log')
-    .select('*')
-    .eq('tournament_id', tournament?.id ?? '')
-    .order('fetched_at', { ascending: false })
-    .limit(20);
+  const tournamentId = tournament?.id ?? '';
 
-  const { data: golferResults } = await supabase
-    .from('golfer_results')
-    .select(`
-      *,
-      golfer:golfers ( name, group:groups ( name ) )
-    `)
-    .eq('tournament_id', tournament?.id ?? '')
-    .order('total_points', { ascending: false });
+  const [logsRes, golferResultsRes, scoresRes] = await Promise.all([
+    supabase
+      .from('score_fetch_log')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .order('fetched_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('golfer_results')
+      .select(`
+        *,
+        golfer:golfers ( name, group:groups ( name ) )
+      `)
+      .eq('tournament_id', tournamentId)
+      .order('total_points', { ascending: false }),
+    supabase
+      .from('golfer_scores')
+      .select('golfer_id, round_number, score_to_par, eagles, double_eagles, holes_in_one, hole_scores')
+      .eq('tournament_id', tournamentId),
+  ]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900">Scoring</h1>
       <ScoreFetcher
-        tournamentId={tournament?.id ?? ''}
+        tournamentId={tournamentId}
         autoFetchPaused={tournament?.auto_fetch_paused ?? false}
-        logs={logs ?? []}
-        golferResults={golferResults ?? []}
+        logs={logsRes.data ?? []}
+        golferResults={golferResultsRes.data ?? []}
+        golferScores={scoresRes.data ?? []}
       />
     </div>
   );
