@@ -30,8 +30,21 @@ export function detectScoringEvents(
   return { eagles, double_eagles, holes_in_one };
 }
 
+function isRoundComplete(score: { hole_scores: number[] | null }): boolean {
+  return Array.isArray(score.hole_scores) && score.hole_scores.length >= 18;
+}
+
 export async function recalculateAll(tournamentId: string) {
   const supabase = createServiceClient();
+
+  // Get tournament status to determine if we should award tournament points
+  const { data: tournament } = await supabase
+    .from('tournament_config')
+    .select('status')
+    .eq('id', tournamentId)
+    .single();
+
+  const tournamentCompleted = tournament?.status === 'completed';
 
   // 1. Get all scores for this tournament
   const { data: scores } = await supabase
@@ -41,21 +54,25 @@ export async function recalculateAll(tournamentId: string) {
 
   if (!scores?.length) return;
 
-  // 2. Find best round of each day
+  // 2. Find best round of each day — only among COMPLETED rounds (18 holes)
   for (let round = 1; round <= 4; round++) {
     const roundScores = scores.filter(
       (s) => s.round_number === round && s.total_strokes != null
     );
-    if (!roundScores.length) continue;
 
-    const bestStrokes = Math.min(...roundScores.map((s) => s.total_strokes!));
+    // Only completed rounds are eligible for best round of day
+    const completedRoundScores = roundScores.filter(isRoundComplete);
 
-    // Reset all, then set best
+    // Reset all for this round
     await supabase
       .from('golfer_scores')
       .update({ is_best_round_of_day: false })
       .eq('tournament_id', tournamentId)
       .eq('round_number', round);
+
+    if (!completedRoundScores.length) continue;
+
+    const bestStrokes = Math.min(...completedRoundScores.map((s) => s.total_strokes!));
 
     await supabase
       .from('golfer_scores')
@@ -65,11 +82,11 @@ export async function recalculateAll(tournamentId: string) {
       .eq('total_strokes', bestStrokes);
   }
 
-  // 3. Find best round of tournament
-  const allPlayedScores = scores.filter((s) => s.total_strokes != null);
+  // 3. Find best round of tournament — only among completed rounds
+  const allCompletedScores = scores.filter((s) => s.total_strokes != null && isRoundComplete(s));
   let bestTournamentStrokes = Infinity;
-  if (allPlayedScores.length) {
-    bestTournamentStrokes = Math.min(...allPlayedScores.map((s) => s.total_strokes!));
+  if (allCompletedScores.length) {
+    bestTournamentStrokes = Math.min(...allCompletedScores.map((s) => s.total_strokes!));
   }
 
   // 4. Get fresh scores with updated best-round flags
@@ -84,6 +101,7 @@ export async function recalculateAll(tournamentId: string) {
   for (const golferId of golferIds) {
     const golferScores = freshScores!.filter((s) => s.golfer_id === golferId);
     const playedRounds = golferScores.filter((s) => s.total_strokes != null);
+    const completedRounds = playedRounds.filter(isRoundComplete);
 
     // Daily points = sum of round points
     let dailyPoints = 0;
@@ -91,22 +109,17 @@ export async function recalculateAll(tournamentId: string) {
       dailyPoints += calculateRoundPoints(score as GolferScore, score.is_best_round_of_day);
     }
 
-    // Check if made cut (has rounds 3 or 4)
+    // Check if made cut (has round 3 or 4 with strokes)
     const madeCut = golferScores.some(
       (s) => (s.round_number === 3 || s.round_number === 4) && s.total_strokes != null
     );
 
-    // Best round of tournament
+    // Best round of tournament — only from completed rounds
     const isBestOfTournament =
-      playedRounds.length > 0 &&
-      playedRounds.some((s) => s.total_strokes === bestTournamentStrokes);
+      completedRounds.length > 0 &&
+      completedRounds.some((s) => s.total_strokes === bestTournamentStrokes);
 
-    // Get position from the latest round score that has one
-    const latestWithPosition = golferScores
-      .sort((a, b) => b.round_number - a.round_number)
-      .find(() => true); // just get latest
-
-    // We need position from golfer_results or from the score data
+    // Get position from golfer_results
     const { data: existingResult } = await supabase
       .from('golfer_results')
       .select('final_position')
@@ -115,10 +128,15 @@ export async function recalculateAll(tournamentId: string) {
       .single();
 
     const position = existingResult?.final_position ?? null;
-    const tournamentPoints =
-      getPositionPoints(position) +
-      (madeCut ? POINTS.MADE_CUT : 0) +
-      (isBestOfTournament ? POINTS.BEST_ROUND_OF_TOURNAMENT : 0);
+
+    // Tournament points only awarded when tournament is completed
+    let tournamentPoints = 0;
+    if (tournamentCompleted) {
+      tournamentPoints =
+        getPositionPoints(position) +
+        (madeCut ? POINTS.MADE_CUT : 0) +
+        (isBestOfTournament ? POINTS.BEST_ROUND_OF_TOURNAMENT : 0);
+    }
 
     const totalStrokes = playedRounds.reduce((sum, s) => sum + (s.total_strokes ?? 0), 0);
     const totalScoreToPar = playedRounds.reduce((sum, s) => sum + (s.score_to_par ?? 0), 0);
