@@ -91,7 +91,7 @@ export function parseCompetitorRound(
       const diff = strokes - par;
 
       if (strokes === 1) holesInOne++;
-      if (diff <= -3) doubleEagles++;
+      else if (diff <= -3) doubleEagles++;
       else if (diff === -2) eagles++;
     }
   }

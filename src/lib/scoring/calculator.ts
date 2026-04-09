@@ -23,7 +23,7 @@ export function detectScoringEvents(
     if (!holeScores[i] || !holePars[i]) continue;
     const diff = holeScores[i] - holePars[i];
     if (holeScores[i] === 1) holes_in_one++;
-    if (diff <= -3) double_eagles++;
+    else if (diff <= -3) double_eagles++;
     else if (diff === -2) eagles++;
   }
 
