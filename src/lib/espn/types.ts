@@ -22,32 +22,39 @@ export interface ESPNCompetition {
 }
 
 export interface ESPNCompetitor {
-  id: string;
+  id: string; // athlete ID lives here (top-level on competitor)
+  uid?: string;
+  order: number; // tournament position
   athlete: {
-    id: string;
+    id?: string; // sometimes present, sometimes not
     fullName: string;
     displayName: string;
+    shortName?: string;
   };
   score: string; // e.g. "-10" or "E"
-  order: number; // tournament position
-  status: {
-    type: {
-      name: string; // "STATUS_CUT", "STATUS_ACTIVE", etc.
+  status?: {
+    type?: {
+      name?: string; // "STATUS_CUT", "STATUS_ACTIVE", etc.
     };
-    period: number;
+    period?: number;
   };
   linescores: ESPNRoundScore[];
+  statistics?: any[];
 }
 
 export interface ESPNRoundScore {
   period: number; // round number
-  value: number; // total strokes for round
-  displayValue: string;
+  value?: number; // total strokes for round (may be absent for future rounds)
+  displayValue?: string; // score-to-par display like "-3", "E", "+2"
   linescores?: ESPNHoleScore[];
+  statistics?: any;
 }
 
 export interface ESPNHoleScore {
   period: number; // hole number
   value: number; // strokes taken
   displayValue: string;
+  scoreType?: {
+    displayValue: string; // relative to par display
+  };
 }

@@ -71,12 +71,12 @@ export function parseCompetitorRound(
   eagles: number;
   doubleEagles: number;
   holesInOne: number;
+  holesPlayed: number;
 } | null {
   const roundData = competitor.linescores?.find((ls) => ls.period === roundNumber);
   if (!roundData || !roundData.value) return null;
 
   const totalStrokes = roundData.value;
-  const scoreToPar = totalStrokes - 72; // Augusta is par 72
 
   let eagles = 0;
   let doubleEagles = 0;
@@ -96,5 +96,20 @@ export function parseCompetitorRound(
     }
   }
 
-  return { totalStrokes, scoreToPar, holeScores, eagles, doubleEagles, holesInOne };
+  const holesPlayed = holeScores.length;
+
+  // Calculate score-to-par based on holes actually played, not full round
+  const parForHolesPlayed = holeScores.reduce(
+    (sum, _, i) => sum + (AUGUSTA_PARS[i] ?? 4),
+    0
+  );
+  const scoreToPar = holesPlayed > 0 ? totalStrokes - parForHolesPlayed : null;
+
+  return { totalStrokes, scoreToPar, holeScores, eagles, doubleEagles, holesInOne, holesPlayed };
+}
+
+// Extract athlete ID from competitor — ESPN puts it in different places
+export function getCompetitorAthleteId(competitor: ESPNCompetitor): string | undefined {
+  // Try competitor.athlete.id first, then fall back to competitor.id
+  return competitor.athlete?.id || competitor.id;
 }

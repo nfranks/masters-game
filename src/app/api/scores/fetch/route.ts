@@ -1,8 +1,12 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { fetchScoreboard, fetchEventScoreboard, parseCompetitorRound, AUGUSTA_PARS } from '@/lib/espn/client';
-import { detectScoringEvents } from '@/lib/scoring/calculator';
+import { fetchScoreboard, fetchEventScoreboard, parseCompetitorRound, getCompetitorAthleteId, AUGUSTA_PARS } from '@/lib/espn/client';
 import { recalculateAll } from '@/lib/scoring/calculator';
+
+// Normalize names by stripping diacritics for matching (Åberg → Aberg, García → Garcia)
+function normalizeName(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
 
 export async function POST(request: Request) {
   const supabase = createServiceClient();
@@ -36,42 +40,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No competitors found' }, { status: 400 });
     }
 
+    // Auto-save the ESPN event ID if we didn't have one
+    if (!tournament.espn_event_id && event.id) {
+      await supabase
+        .from('tournament_config')
+        .update({ espn_event_id: event.id })
+        .eq('id', tournament_id);
+    }
+
     // Get our golfers
     const { data: golfers } = await supabase
       .from('golfers')
       .select('*')
       .eq('tournament_id', tournament_id);
 
-    // Build name -> golfer map (case-insensitive)
-    const golferMap = new Map<string, typeof golfers extends (infer T)[] | null ? T : never>();
+    // Build lookup maps: espn ID -> golfer, normalized name -> golfer
+    type GolferRow = NonNullable<typeof golfers>[number];
+    const golferByEspnId = new Map<string, GolferRow>();
+    const golferByName = new Map<string, GolferRow>();
     for (const g of golfers ?? []) {
-      golferMap.set(g.name.toLowerCase().trim(), g);
+      golferByName.set(normalizeName(g.name), g);
       if (g.espn_athlete_id) {
-        golferMap.set(`espn_${g.espn_athlete_id}`, g);
+        golferByEspnId.set(g.espn_athlete_id, g);
       }
     }
 
     let updated = 0;
     const unmatched: string[] = [];
+    const matched: string[] = [];
 
     for (const competitor of competition.competitors) {
-      // Match by ESPN athlete ID first, then by name
+      const athleteId = getCompetitorAthleteId(competitor);
+
+      // Match by ESPN athlete ID first, then by normalized name (strips diacritics)
       const golfer =
-        golferMap.get(`espn_${competitor.athlete.id}`) ??
-        golferMap.get(competitor.athlete.fullName.toLowerCase().trim()) ??
-        golferMap.get(competitor.athlete.displayName.toLowerCase().trim());
+        (athleteId ? golferByEspnId.get(athleteId) : null) ??
+        golferByName.get(normalizeName(competitor.athlete.fullName)) ??
+        golferByName.get(normalizeName(competitor.athlete.displayName));
 
       if (!golfer) {
         unmatched.push(competitor.athlete.fullName);
         continue;
       }
 
-      // Update ESPN athlete ID for future matching
-      if (!golfer.espn_athlete_id) {
+      matched.push(golfer.name);
+
+      // Update ESPN athlete ID for future matching if we matched by name
+      if (athleteId && golfer.espn_athlete_id !== athleteId) {
         await supabase
           .from('golfers')
-          .update({ espn_athlete_id: competitor.athlete.id })
+          .update({ espn_athlete_id: athleteId })
           .eq('id', golfer.id);
+        // Also update our local map
+        golferByEspnId.set(athleteId, golfer);
       }
 
       // Process each round
@@ -100,7 +121,7 @@ export async function POST(request: Request) {
 
       // Update golfer results with position and cut status
       const isCut = competitor.status?.type?.name === 'STATUS_CUT';
-      const madeCut = !isCut && competitor.linescores?.some((ls) => ls.period >= 3);
+      const madeCut = !isCut && competitor.linescores?.some((ls) => ls.period >= 3 && ls.value != null);
 
       await supabase.from('golfer_results').upsert(
         {
@@ -127,6 +148,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       updated,
+      matched: matched.length,
       unmatched,
       total_competitors: competition.competitors.length,
     });
