@@ -34,6 +34,7 @@ interface GolferDetail {
     eagles: number;
     double_eagles: number;
     holes_in_one: number;
+    hole_scores: number[] | null;
     is_best_round_of_day: boolean;
   }[];
 }
@@ -100,7 +101,16 @@ export function TeamRoster({ golferDetails }: { golferDetails: GolferDetail[] })
               >
                 {g.group?.name}
               </Badge>
-              <p className={`text-lg font-bold mt-1 ${
+              {result?.total_score_to_par !== null && result?.total_score_to_par !== undefined && (
+                <p className={`text-sm font-bold mt-1 ${
+                  isExpanded ? 'text-white/80' :
+                  result.total_score_to_par < 0 ? 'text-red-600' :
+                  result.total_score_to_par > 0 ? 'text-blue-600' : 'text-gray-500'
+                }`}>
+                  {formatPar(result.total_score_to_par)}
+                </p>
+              )}
+              <p className={`text-lg font-bold ${result?.total_score_to_par != null ? 'mt-0' : 'mt-1'} ${
                 isExpanded
                   ? 'text-masters-gold'
                   : (result?.total_points ?? 0) > 0
@@ -215,24 +225,43 @@ export function TeamRoster({ golferDetails }: { golferDetails: GolferDetail[] })
                 </div>
               ))}
 
-              {/* Strokes */}
+              {/* Scores (to par) */}
               {[1, 2, 3, 4].map((r) => {
                 const score = expanded.scores.find((s) => s.round_number === r);
+                const holesPlayed = score?.hole_scores?.length ?? 0;
+                const isComplete = holesPlayed >= 18;
                 return (
-                  <div key={`s-${r}`} className="py-2 px-1 text-sm text-gray-600 border-b">
-                    {score?.total_strokes ?? '-'}
-                    {score?.score_to_par !== null && score?.score_to_par !== undefined && (
-                      <span className="text-[10px] text-gray-400 ml-0.5">
-                        ({formatPar(score.score_to_par)})
-                      </span>
-                    )}
+                  <div key={`s-${r}`} className="py-2 px-1 text-sm border-b">
+                    {score ? (
+                      <>
+                        <span className={`font-medium ${
+                          (score.score_to_par ?? 0) < 0 ? 'text-red-600' :
+                          (score.score_to_par ?? 0) > 0 ? 'text-blue-600' : 'text-gray-600'
+                        }`}>
+                          {formatPar(score.score_to_par)}
+                        </span>
+                        {!isComplete && holesPlayed > 0 && (
+                          <div className="text-[9px] text-gray-400">thru {holesPlayed}</div>
+                        )}
+                        {((score.eagles ?? 0) > 0 || (score.holes_in_one ?? 0) > 0 || (score.double_eagles ?? 0) > 0) && (
+                          <div className="text-[9px] text-green-600 mt-0.5">
+                            {score.eagles > 0 && `${score.eagles}🦅`}
+                            {score.double_eagles > 0 && ` ${score.double_eagles}🦅🦅`}
+                            {score.holes_in_one > 0 && ` ${score.holes_in_one}🕳️`}
+                          </div>
+                        )}
+                      </>
+                    ) : '-'}
                   </div>
                 );
               })}
               <div className="py-2 px-1 text-sm text-gray-600 border-b">
                 {expanded.result?.final_position ? `T${expanded.result.final_position}` : '-'}
               </div>
-              <div className="py-2 px-1 text-sm font-medium text-gray-600 border-b bg-masters-green/5">
+              <div className={`py-2 px-1 text-sm font-bold border-b bg-masters-green/5 ${
+                (expanded.result?.total_score_to_par ?? 0) < 0 ? 'text-red-600' :
+                (expanded.result?.total_score_to_par ?? 0) > 0 ? 'text-blue-600' : 'text-gray-600'
+              }`}>
                 {formatPar(expanded.result?.total_score_to_par ?? null)}
               </div>
 

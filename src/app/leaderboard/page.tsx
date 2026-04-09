@@ -36,16 +36,26 @@ interface LeaderboardEntry {
       total_points: number;
       daily_points: number;
       tournament_points: number;
+      total_score_to_par: number | null;
       made_cut: boolean;
       final_position: number | null;
     } | null;
     scores: {
       round_number: number;
       total_strokes: number | null;
+      score_to_par: number | null;
       eagles: number;
+      double_eagles: number;
       holes_in_one: number;
+      hole_scores: number[] | null;
     }[];
   }[];
+}
+
+function formatPar(par: number | null) {
+  if (par === null || par === undefined) return '-';
+  if (par === 0) return 'E';
+  return par > 0 ? `+${par}` : `${par}`;
 }
 
 export default function LeaderboardPage() {
@@ -189,10 +199,12 @@ export default function LeaderboardPage() {
                                 <TableRow>
                                   <TableHead>Golfer</TableHead>
                                   <TableHead>Group</TableHead>
+                                  <TableHead className="text-center">Tourn</TableHead>
                                   <TableHead className="text-center">R1</TableHead>
                                   <TableHead className="text-center">R2</TableHead>
                                   <TableHead className="text-center">R3</TableHead>
                                   <TableHead className="text-center">R4</TableHead>
+                                  <TableHead className="text-center">Eagles</TableHead>
                                   <TableHead className="text-center">Pos</TableHead>
                                   <TableHead className="text-right">Pts</TableHead>
                                 </TableRow>
@@ -203,7 +215,10 @@ export default function LeaderboardPage() {
                                     (a, b) =>
                                       (b.result?.total_points ?? 0) - (a.result?.total_points ?? 0)
                                   )
-                                  .map((gd) => (
+                                  .map((gd) => {
+                                    const totalEagles = gd.scores.reduce((sum, s) => sum + (s.eagles ?? 0) + (s.double_eagles ?? 0), 0);
+                                    const totalHios = gd.scores.reduce((sum, s) => sum + (s.holes_in_one ?? 0), 0);
+                                    return (
                                     <TableRow key={gd.golfer.id}>
                                       <TableCell className="font-medium text-sm">
                                         {gd.golfer.name}
@@ -213,16 +228,46 @@ export default function LeaderboardPage() {
                                           {gd.golfer.group?.name ?? '?'}
                                         </Badge>
                                       </TableCell>
+                                      <TableCell className="text-center text-sm font-medium">
+                                        <span className={
+                                          (gd.result?.total_score_to_par ?? 0) < 0 ? 'text-red-600' :
+                                          (gd.result?.total_score_to_par ?? 0) > 0 ? 'text-blue-600' : ''
+                                        }>
+                                          {formatPar(gd.result?.total_score_to_par ?? null)}
+                                        </span>
+                                      </TableCell>
                                       {[1, 2, 3, 4].map((r) => {
                                         const score = gd.scores.find(
                                           (s) => s.round_number === r
                                         );
+                                        const holesPlayed = score?.hole_scores?.length ?? 0;
+                                        const isComplete = holesPlayed >= 18;
                                         return (
                                           <TableCell key={r} className="text-center text-sm">
-                                            {score?.total_strokes ?? '-'}
+                                            {score ? (
+                                              <span className={
+                                                (score.score_to_par ?? 0) < 0 ? 'text-red-600' :
+                                                (score.score_to_par ?? 0) > 0 ? 'text-blue-600' : ''
+                                              }>
+                                                {formatPar(score.score_to_par)}
+                                                {!isComplete && holesPlayed > 0 && (
+                                                  <span className="text-[10px] text-gray-400 ml-0.5">
+                                                    ({holesPlayed})
+                                                  </span>
+                                                )}
+                                              </span>
+                                            ) : '-'}
                                           </TableCell>
                                         );
                                       })}
+                                      <TableCell className="text-center text-sm">
+                                        {totalEagles > 0 || totalHios > 0 ? (
+                                          <span className="text-green-700 font-medium">
+                                            {totalEagles > 0 && `${totalEagles}`}
+                                            {totalHios > 0 && ` ${totalHios} ace`}
+                                          </span>
+                                        ) : '-'}
+                                      </TableCell>
                                       <TableCell className="text-center text-sm">
                                         {gd.result?.final_position
                                           ? `T${gd.result.final_position}`
@@ -234,7 +279,8 @@ export default function LeaderboardPage() {
                                         {gd.result?.total_points ?? 0}
                                       </TableCell>
                                     </TableRow>
-                                  ))}
+                                    );
+                                  })}
                               </TableBody>
                             </Table>
                           </TableCell>
