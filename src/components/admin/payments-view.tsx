@@ -43,7 +43,7 @@ interface Props {
 type SortField = 'name' | 'team_name' | 'paid_to' | 'payment_method' | 'is_paid';
 type SortDir = 'asc' | 'desc';
 
-const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle', 'Other'];
+const METHOD_OPTIONS = ['Venmo', 'Nate', 'Matt', 'Charle', 'Other', 'Free Entry'];
 
 export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
   const [entries, setEntries] = useState(initialEntries);
@@ -65,14 +65,21 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
       else s.unpaid++;
     }
     return Array.from(map.entries())
-      .map(([method, stats]) => ({ method, ...stats, collected: stats.paid * entryFee }))
+      .map(([method, stats]) => ({
+        method,
+        ...stats,
+        collected: method === 'Free Entry' ? 0 : stats.paid * entryFee,
+        expectedAmount: method === 'Free Entry' ? 0 : stats.total * entryFee,
+      }))
       .sort((a, b) => b.total - a.total);
   }, [entries, entryFee]);
 
-  const totalPaid = entries.filter((e) => e.is_paid).length;
-  const totalUnpaid = entries.filter((e) => !e.is_paid).length;
+  const freeEntries = entries.filter((e) => e.payment_method === 'Free Entry').length;
+  const payingEntries = entries.filter((e) => e.payment_method !== 'Free Entry');
+  const totalPaid = payingEntries.filter((e) => e.is_paid).length;
+  const totalUnpaid = payingEntries.filter((e) => !e.is_paid).length;
   const totalCollected = totalPaid * entryFee;
-  const totalExpected = entries.length * entryFee;
+  const totalExpected = payingEntries.length * entryFee;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -169,7 +176,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {methodSummary.map(({ method, total, paid, unpaid, collected }) => (
+            {methodSummary.map(({ method, total, paid, unpaid, collected, expectedAmount }) => (
               <button
                 key={method}
                 onClick={() => setFilterMethod(filterMethod === method ? 'all' : (method === 'Unassigned' ? 'unassigned' : method))}
@@ -183,7 +190,7 @@ export function PaymentsView({ entries: initialEntries, entryFee }: Props) {
                 <p className="font-medium text-sm truncate">{method}</p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-xl font-bold text-green-700">${collected}</span>
-                  <span className="text-xs text-gray-500">of ${total * entryFee}</span>
+                  <span className="text-xs text-gray-500">of ${expectedAmount}</span>
                 </div>
                 <div className="flex gap-3 mt-2 text-xs">
                   <span className="text-green-600">{paid} paid</span>
