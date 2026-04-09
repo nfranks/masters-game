@@ -194,8 +194,23 @@ export async function PUT(request: Request) {
 
   const tournament = entry.tournament as any;
 
-  // Check deadline (admins bypass this)
-  if (!admin_edit) {
+  // Check deadline — verify admin_edit claims by checking the actual session
+  let isAdmin = false;
+  if (admin_edit) {
+    const { createClient } = await import('@/lib/supabase/server');
+    const sessionSupabase = await createClient();
+    const { data: { user } } = await sessionSupabase.auth.getUser();
+    if (user) {
+      const { data: adminUser } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      isAdmin = !!adminUser;
+    }
+  }
+
+  if (!isAdmin) {
     if (tournament.status !== 'open') {
       return NextResponse.json({ error: 'Entries are closed' }, { status: 400 });
     }
