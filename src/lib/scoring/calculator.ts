@@ -74,12 +74,17 @@ export async function recalculateAll(tournamentId: string) {
 
     const bestStrokes = Math.min(...completedRoundScores.map((s) => s.total_strokes!));
 
+    // Only mark completed rounds as best — filter by golfer IDs that actually finished
+    const bestGolferIds = completedRoundScores
+      .filter((s) => s.total_strokes === bestStrokes)
+      .map((s) => s.golfer_id);
+
     await supabase
       .from('golfer_scores')
       .update({ is_best_round_of_day: true })
       .eq('tournament_id', tournamentId)
       .eq('round_number', round)
-      .eq('total_strokes', bestStrokes);
+      .in('golfer_id', bestGolferIds);
   }
 
   // 3. Find best round of tournament — only among completed rounds
