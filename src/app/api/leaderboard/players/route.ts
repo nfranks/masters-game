@@ -39,27 +39,28 @@ export async function GET(request: Request) {
 
   if (!golfers?.length) return NextResponse.json([]);
 
-  // Get entry counts per golfer — fetch all rows (default limit is 1000)
+  // Get active entry IDs for this tournament
+  const { data: activeEntries } = await supabase
+    .from('entries')
+    .select('id')
+    .eq('tournament_id', tournamentId)
+    .eq('is_archived', false);
+
+  const activeEntryIds = (activeEntries ?? []).map((e) => e.id);
+
+  // Get entry_golfers for active entries, paginated
   const entryCountMap = new Map<string, number>();
-  let offset = 0;
-  const pageSize = 1000;
-  while (true) {
+  const batchSize = 50; // batch entry IDs to keep URL short
+  for (let i = 0; i < activeEntryIds.length; i += batchSize) {
+    const batch = activeEntryIds.slice(i, i + batchSize);
     const { data: entryGolfers } = await supabase
       .from('entry_golfers')
-      .select('golfer_id, entry:entries!inner ( id, is_archived )')
-      .in('golfer_id', golfers.map((g) => g.id))
-      .range(offset, offset + pageSize - 1);
+      .select('golfer_id')
+      .in('entry_id', batch);
 
-    if (!entryGolfers?.length) break;
-
-    for (const eg of entryGolfers) {
-      const entry = eg.entry as any;
-      if (entry?.is_archived) continue;
+    for (const eg of entryGolfers ?? []) {
       entryCountMap.set(eg.golfer_id, (entryCountMap.get(eg.golfer_id) ?? 0) + 1);
     }
-
-    if (entryGolfers.length < pageSize) break;
-    offset += pageSize;
   }
 
   // Get total active entries count
