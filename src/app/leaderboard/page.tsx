@@ -439,7 +439,7 @@ function PlayersView({
           <TableHead className="text-center">R3</TableHead>
           <TableHead className="text-center">R4</TableHead>
           <TableHead className="text-center">Pos</TableHead>
-          <TableHead className="text-center">Owned</TableHead>
+          <TableHead className="text-center">Picked</TableHead>
           <TableHead className="text-right">Pts</TableHead>
           <TableHead className="w-8"></TableHead>
         </TableRow>
@@ -543,7 +543,7 @@ function PlayersView({
                   <TableCell colSpan={11} className="bg-gray-50 px-6 py-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500">Ownership</span>
+                        <span className="text-gray-500">Picked by</span>
                         <p className="font-semibold">
                           {player.entry_count} / {player.total_entries} teams (
                           {player.total_entries > 0

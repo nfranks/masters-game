@@ -39,17 +39,27 @@ export async function GET(request: Request) {
 
   if (!golfers?.length) return NextResponse.json([]);
 
-  // Get entry counts per golfer
-  const { data: entryGolfers } = await supabase
-    .from('entry_golfers')
-    .select('golfer_id, entry:entries!inner ( id, is_archived )')
-    .in('golfer_id', golfers.map((g) => g.id));
-
+  // Get entry counts per golfer — fetch all rows (default limit is 1000)
   const entryCountMap = new Map<string, number>();
-  for (const eg of entryGolfers ?? []) {
-    const entry = eg.entry as any;
-    if (entry?.is_archived) continue;
-    entryCountMap.set(eg.golfer_id, (entryCountMap.get(eg.golfer_id) ?? 0) + 1);
+  let offset = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data: entryGolfers } = await supabase
+      .from('entry_golfers')
+      .select('golfer_id, entry:entries!inner ( id, is_archived )')
+      .in('golfer_id', golfers.map((g) => g.id))
+      .range(offset, offset + pageSize - 1);
+
+    if (!entryGolfers?.length) break;
+
+    for (const eg of entryGolfers) {
+      const entry = eg.entry as any;
+      if (entry?.is_archived) continue;
+      entryCountMap.set(eg.golfer_id, (entryCountMap.get(eg.golfer_id) ?? 0) + 1);
+    }
+
+    if (entryGolfers.length < pageSize) break;
+    offset += pageSize;
   }
 
   // Get total active entries count
