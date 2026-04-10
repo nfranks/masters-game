@@ -259,7 +259,7 @@ export function TeamRoster({ golferDetails }: { golferDetails: GolferDetail[] })
                 );
               })}
               <div className="py-2 px-1 text-sm text-gray-600 border-b">
-                {expanded.result?.final_position ? `T${expanded.result.final_position}` : '-'}
+                {expanded.result?.final_position ?? '-'}
               </div>
               <div className={`py-2 px-1 text-sm font-bold border-b bg-masters-green/5 ${
                 (expanded.result?.total_score_to_par ?? 0) < 0 ? 'text-red-600' :

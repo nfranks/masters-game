@@ -391,7 +391,7 @@ function TeamsView({
                             </TableCell>
                             <TableCell className="text-center text-sm">
                               {gd.result?.final_position
-                                ? `T${gd.result.final_position}`
+                                ? gd.result.final_position
                                 : (gd.result?.made_cut === false && gd.scores.some((s) => s.round_number === 2 && s.total_strokes != null))
                                 ? 'MC'
                                 : '-'}
@@ -513,7 +513,7 @@ function PlayersView({
                 })}
                 <TableCell className="text-center text-sm">
                   {player.result?.final_position
-                    ? `T${player.result.final_position}`
+                    ? player.result.final_position
                     : player.result?.made_cut === false &&
                       player.scores.some(
                         (s) => s.round_number === 2 && s.total_strokes != null
