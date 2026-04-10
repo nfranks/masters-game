@@ -77,7 +77,7 @@ export default function DailyPage() {
   return (
     <div className="min-h-screen bg-masters-dark">
       <Header />
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-white">Daily Winners</h1>
           <div className="flex items-center gap-3">
@@ -108,14 +108,21 @@ export default function DailyPage() {
                       No scores for {r.label} yet
                     </div>
                   ) : (
-                    <Table>
+                    <Table className="table-fixed">
+                      <colgroup>
+                        <col className="w-12" />
+                        <col />
+                        <col className="w-16" />
+                        <col className="w-20" />
+                        <col className="w-8" />
+                      </colgroup>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>#</TableHead>
                           <TableHead>Team</TableHead>
-                          <TableHead className="text-right w-20">O/U</TableHead>
-                          <TableHead className="text-right w-20">Strokes</TableHead>
-                          <TableHead className="w-8"></TableHead>
+                          <TableHead className="text-right">O/U</TableHead>
+                          <TableHead className="text-right">Strokes</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
