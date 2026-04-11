@@ -114,25 +114,21 @@ export async function recalculateAll(tournamentId: string) {
       dailyPoints += calculateRoundPoints(score as GolferScore, score.is_best_round_of_day);
     }
 
-    // Check if made cut (has round 3 or 4 with strokes)
-    const madeCut = golferScores.some(
-      (s) => (s.round_number === 3 || s.round_number === 4) && s.total_strokes != null
-    );
-
     // Best round of tournament — only from completed rounds
     const isBestOfTournament =
       completedRounds.length > 0 &&
       completedRounds.some((s) => s.total_strokes === bestTournamentStrokes);
 
-    // Get position from golfer_results
+    // Get existing result (position and made_cut are set by ESPN fetch, don't overwrite)
     const { data: existingResult } = await supabase
       .from('golfer_results')
-      .select('final_position')
+      .select('final_position, made_cut')
       .eq('golfer_id', golferId)
       .eq('tournament_id', tournamentId)
       .single();
 
     const position = existingResult?.final_position ?? null;
+    const madeCut = existingResult?.made_cut ?? false;
 
     // Made cut points awarded immediately; other tournament points wait until completed
     let tournamentPoints = 0;
@@ -153,7 +149,6 @@ export async function recalculateAll(tournamentId: string) {
         final_position: position,
         total_strokes: totalStrokes || null,
         total_score_to_par: totalScoreToPar,
-        made_cut: madeCut,
         is_best_round_of_tournament: isBestOfTournament,
         tournament_points: tournamentPoints,
         daily_points: dailyPoints,
