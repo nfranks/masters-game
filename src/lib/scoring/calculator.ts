@@ -134,12 +134,12 @@ export async function recalculateAll(tournamentId: string) {
 
     const position = existingResult?.final_position ?? null;
 
-    // Tournament points only awarded when tournament is completed
+    // Made cut points awarded immediately; other tournament points wait until completed
     let tournamentPoints = 0;
+    if (madeCut) tournamentPoints += POINTS.MADE_CUT;
     if (tournamentCompleted) {
-      tournamentPoints =
+      tournamentPoints +=
         getPositionPoints(position) +
-        (madeCut ? POINTS.MADE_CUT : 0) +
         (isBestOfTournament ? POINTS.BEST_ROUND_OF_TOURNAMENT : 0);
     }
 
