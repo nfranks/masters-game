@@ -69,6 +69,11 @@ export async function POST(request: Request) {
     const unmatched: string[] = [];
     const matched: string[] = [];
 
+    // Check if the cut has happened (any player has STATUS_CUT)
+    const cutHasHappened = competition.competitors.some(
+      (c) => c.status?.type?.name === 'STATUS_CUT'
+    );
+
     for (const competitor of competition.competitors) {
       const athleteId = getCompetitorAthleteId(competitor);
 
@@ -121,7 +126,8 @@ export async function POST(request: Request) {
 
       // Update golfer results with position and cut status
       const isCut = competitor.status?.type?.name === 'STATUS_CUT';
-      const madeCut = !isCut && competitor.linescores?.some((ls) => ls.period >= 3 && ls.value != null);
+      // Made cut = not cut AND the cut has happened
+      const madeCut = cutHasHappened && !isCut;
 
       await supabase.from('golfer_results').upsert(
         {
