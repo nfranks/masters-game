@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Archive, ArchiveRestore, AlertTriangle } from 'lucide-react';
+import { Search, Pencil, ArrowUpDown, ArrowUp, ArrowDown, Archive, ArchiveRestore, AlertTriangle, Copy, Mail, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EntryRow {
@@ -79,8 +79,23 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
     document.addEventListener('mouseup', onUp);
   };
 
+  const [emailCopied, setEmailCopied] = useState(false);
+
   const activeEntries = entries.filter((e) => !e.is_archived);
   const archivedEntries = entries.filter((e) => e.is_archived);
+
+  const copyEmails = (format: 'emails' | 'names') => {
+    const list = activeEntries.map((e) =>
+      format === 'names'
+        ? `${e.first_name} ${e.last_name} <${e.email}>`
+        : e.email
+    );
+    const unique = Array.from(new Set(list));
+    navigator.clipboard.writeText(unique.join(', '));
+    setEmailCopied(true);
+    toast.success(`${unique.length} email${unique.length !== 1 ? 's' : ''} copied to clipboard`);
+    setTimeout(() => setEmailCopied(false), 2000);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -167,6 +182,27 @@ export function EntryTable({ entries: initialEntries, entryFee }: Props) {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
+        </div>
+        <div className="relative group">
+          <Button
+            variant="outline"
+            onClick={() => copyEmails('emails')}
+            className="whitespace-nowrap"
+          >
+            {emailCopied ? <Check className="w-4 h-4 mr-2 text-green-600" /> : <Mail className="w-4 h-4 mr-2" />}
+            Copy Emails ({activeEntries.length})
+          </Button>
+          <div className="hidden group-hover:block absolute z-10 right-0 top-full mt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); copyEmails('names'); }}
+              className="whitespace-nowrap text-xs shadow-md"
+            >
+              <Copy className="w-3 h-3 mr-1" />
+              Copy with names
+            </Button>
+          </div>
         </div>
         <Button
           variant={showArchived ? 'default' : 'outline'}

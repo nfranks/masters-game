@@ -69,15 +69,47 @@ export async function POST(request: Request) {
     const unmatched: string[] = [];
     const matched: string[] = [];
 
-    // Check if the cut has happened (any player has STATUS_CUT)
-    const cutHasHappened = competition.competitors.some(
-      (c) => c.status?.type?.name === 'STATUS_CUT'
+    // Detect cut: ESPN often has no STATUS_CUT data, so we derive it.
+    // Method 1: Explicit ESPN status (ideal but often missing)
+    const espnHasCutStatus = competition.competitors.some(
+      (c: any) => c.status?.type?.name === 'STATUS_CUT'
     );
+
+    // Method 2: Compute from R1+R2 totals (Masters: top 50 + ties)
+    // Only applies once R2 is complete (period >= 2)
+    const tournamentPeriod = competition.status?.period ?? 1;
+    let computedCutLine: number | null = null;
+    const competitorR2Totals = new Map<string, number>();
+
+    if (!espnHasCutStatus && tournamentPeriod >= 2) {
+      for (const c of competition.competitors) {
+        const r1 = c.linescores?.find((ls: any) => ls.period === 1);
+        const r2 = c.linescores?.find((ls: any) => ls.period === 2);
+        if (r1?.value && r2?.value) {
+          const total = r1.value + r2.value;
+          const id = c.athlete?.id || c.id;
+          if (id) competitorR2Totals.set(id, total);
+        }
+      }
+
+      if (competitorR2Totals.size > 0) {
+        const sortedTotals = [...competitorR2Totals.values()].sort((a, b) => a - b);
+        if (sortedTotals.length >= 50) {
+          computedCutLine = sortedTotals[49];
+        }
+      }
+    }
+
+    const cutHasHappened = espnHasCutStatus || computedCutLine !== null;
+
+    // Collect all upserts in batches instead of sequential awaits
+    const scoreUpserts: any[] = [];
+    const resultUpserts: any[] = [];
+    const espnIdUpdates: Promise<any>[] = [];
 
     for (const competitor of competition.competitors) {
       const athleteId = getCompetitorAthleteId(competitor);
 
-      // Match by ESPN athlete ID first, then by normalized name (strips diacritics)
       const golfer =
         (athleteId ? golferByEspnId.get(athleteId) : null) ??
         golferByName.get(normalizeName(competitor.athlete.fullName)) ??
@@ -92,53 +124,69 @@ export async function POST(request: Request) {
 
       // Update ESPN athlete ID for future matching if we matched by name
       if (athleteId && golfer.espn_athlete_id !== athleteId) {
-        await supabase
-          .from('golfers')
-          .update({ espn_athlete_id: athleteId })
-          .eq('id', golfer.id);
-        // Also update our local map
+        espnIdUpdates.push(
+          Promise.resolve(supabase.from('golfers').update({ espn_athlete_id: athleteId }).eq('id', golfer.id))
+        );
         golferByEspnId.set(athleteId, golfer);
       }
 
-      // Process each round
+      // Collect round scores
       for (let roundNum = 1; roundNum <= 4; roundNum++) {
         const roundData = parseCompetitorRound(competitor, roundNum);
         if (!roundData) continue;
 
-        await supabase.from('golfer_scores').upsert(
-          {
-            golfer_id: golfer.id,
-            tournament_id,
-            round_number: roundNum,
-            total_strokes: roundData.totalStrokes,
-            score_to_par: roundData.scoreToPar,
-            hole_scores: roundData.holeScores.length ? roundData.holeScores : null,
-            hole_pars: AUGUSTA_PARS,
-            eagles: roundData.eagles,
-            double_eagles: roundData.doubleEagles,
-            holes_in_one: roundData.holesInOne,
-            source: 'espn',
-          },
-          { onConflict: 'golfer_id,round_number' }
-        );
+        scoreUpserts.push({
+          golfer_id: golfer.id,
+          tournament_id,
+          round_number: roundNum,
+          total_strokes: roundData.totalStrokes,
+          score_to_par: roundData.scoreToPar,
+          hole_scores: roundData.holeScores.length ? roundData.holeScores : null,
+          hole_pars: AUGUSTA_PARS,
+          eagles: roundData.eagles,
+          double_eagles: roundData.doubleEagles,
+          holes_in_one: roundData.holesInOne,
+          source: 'espn',
+        });
         updated++;
       }
 
-      // Update golfer results with position and cut status
-      const isCut = competitor.status?.type?.name === 'STATUS_CUT';
-      // Made cut = not cut AND the cut has happened
+      // Determine cut status
+      let isCut = competitor.status?.type?.name === 'STATUS_CUT';
+      if (!espnHasCutStatus && computedCutLine !== null) {
+        const compId = getCompetitorAthleteId(competitor);
+        const r2Total = compId ? competitorR2Totals.get(compId) : undefined;
+        isCut = r2Total != null ? r2Total > computedCutLine : true;
+      }
       const madeCut = cutHasHappened && !isCut;
 
-      await supabase.from('golfer_results').upsert(
-        {
-          golfer_id: golfer.id,
-          tournament_id,
-          final_position: competitor.order || null,
-          made_cut: madeCut ?? false,
-        },
-        { onConflict: 'golfer_id,tournament_id' }
+      resultUpserts.push({
+        golfer_id: golfer.id,
+        tournament_id,
+        final_position: competitor.order || null,
+        made_cut: madeCut ?? false,
+      });
+    }
+
+    // Execute all DB writes in parallel batches (Supabase upsert supports arrays)
+    const BATCH_SIZE = 50;
+    const dbPromises: Promise<any>[] = [...espnIdUpdates];
+
+    for (let i = 0; i < scoreUpserts.length; i += BATCH_SIZE) {
+      const batch = scoreUpserts.slice(i, i + BATCH_SIZE);
+      dbPromises.push(
+        Promise.resolve(supabase.from('golfer_scores').upsert(batch, { onConflict: 'golfer_id,round_number' }))
       );
     }
+
+    for (let i = 0; i < resultUpserts.length; i += BATCH_SIZE) {
+      const batch = resultUpserts.slice(i, i + BATCH_SIZE);
+      dbPromises.push(
+        Promise.resolve(supabase.from('golfer_results').upsert(batch, { onConflict: 'golfer_id,tournament_id' }))
+      );
+    }
+
+    await Promise.all(dbPromises);
 
     // Recalculate all points
     await recalculateAll(tournament_id);
@@ -151,12 +199,24 @@ export async function POST(request: Request) {
       source,
     });
 
+    // Count how many made/missed cut
+    const madeCutCount = competition.competitors.filter((c) => {
+      if (espnHasCutStatus) return c.status?.type?.name !== 'STATUS_CUT';
+      if (computedCutLine === null) return false;
+      const compId = c.athlete?.id || c.id;
+      const r2Total = compId ? competitorR2Totals.get(compId) : undefined;
+      return r2Total != null && r2Total <= computedCutLine;
+    }).length;
+
     return NextResponse.json({
       success: true,
       updated,
       matched: matched.length,
       unmatched,
       total_competitors: competition.competitors.length,
+      cut_detection: espnHasCutStatus ? 'espn_status' : computedCutLine ? 'computed_r2' : 'none',
+      cut_line: computedCutLine,
+      made_cut_count: madeCutCount,
     });
   } catch (err: any) {
     await supabase.from('score_fetch_log').insert({
