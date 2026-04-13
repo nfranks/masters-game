@@ -104,8 +104,16 @@ export async function POST(request: Request) {
 
     // Collect all upserts in batches instead of sequential awaits
     const scoreUpserts: any[] = [];
-    const resultUpserts: any[] = [];
     const espnIdUpdates: Promise<any>[] = [];
+
+    // Track golfer data for tied-position computation
+    const golferCompetitorData: {
+      golfer_id: string;
+      espnOrder: number;
+      espnScore: number; // total score to par from ESPN
+      isCut: boolean;
+      madeCut: boolean;
+    }[] = [];
 
     for (const competitor of competition.competitors) {
       const athleteId = getCompetitorAthleteId(competitor);
@@ -160,13 +168,41 @@ export async function POST(request: Request) {
       }
       const madeCut = cutHasHappened && !isCut;
 
-      resultUpserts.push({
+      // ESPN score field is total to par as a string (e.g. "-12", "+3", "E")
+      const espnScoreStr = competitor.score ?? '0';
+      const espnScore = espnScoreStr === 'E' ? 0 : parseFloat(espnScoreStr) || 0;
+
+      golferCompetitorData.push({
         golfer_id: golfer.id,
-        tournament_id,
-        final_position: competitor.order || null,
-        made_cut: madeCut ?? false,
+        espnOrder: competitor.order || 999,
+        espnScore,
+        isCut,
+        madeCut,
       });
     }
+
+    // Compute tied positions: sort non-cut players by score, assign same position to ties
+    // Cut players get no position (null)
+    const activePlayers = golferCompetitorData
+      .filter((g) => !g.isCut)
+      .sort((a, b) => a.espnScore - b.espnScore || a.espnOrder - b.espnOrder);
+
+    const tiedPositions = new Map<string, number | null>();
+    let pos = 1;
+    for (let i = 0; i < activePlayers.length; i++) {
+      if (i > 0 && activePlayers[i].espnScore !== activePlayers[i - 1].espnScore) {
+        pos = i + 1; // Skip positions for ties (e.g., T3,T3,T3,T3 → next is 7)
+      }
+      tiedPositions.set(activePlayers[i].golfer_id, pos);
+    }
+
+    // Build result upserts with tied positions
+    const resultUpserts = golferCompetitorData.map((g) => ({
+      golfer_id: g.golfer_id,
+      tournament_id,
+      final_position: g.isCut ? null : (tiedPositions.get(g.golfer_id) ?? null),
+      made_cut: g.madeCut,
+    }));
 
     // Execute all DB writes in parallel batches (Supabase upsert supports arrays)
     const BATCH_SIZE = 50;
